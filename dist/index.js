@@ -478,40 +478,11 @@ var VueSliderComponent = (function (_super) {
     __extends(VueSliderComponent, _super);
     function VueSliderComponent() {
         var _this = _super.call(this) || this;
-        _this.offset = 0;
+        _this.offset = 20;
         _this.flag = false;
         _this.size = 0;
         _this.currentValue = 0;
         _this.isComponentExists = true;
-        _this.width = 'auto';
-        _this.height = 6;
-        _this.data = null;
-        _this.dotSize = 16;
-        _this.dotWidth = null;
-        _this.dotHeight = null;
-        _this.min = 0;
-        _this.max = 100;
-        _this.interval = 1;
-        _this.show = true;
-        _this.disabled = false;
-        _this.piecewise = false;
-        _this.tooltip = 'always';
-        _this.eventType = 'auto';
-        _this.direction = 'horizontal';
-        _this.reverse = false;
-        _this.lazy = false;
-        _this.clickable = true;
-        _this.speed = 0.5;
-        _this.realTime = false;
-        _this.stopPropagation = false;
-        _this.value = 0;
-        _this.piecewiseLabel = false;
-        _this.debug = process && process.env && process.env.NODE_ENV !== 'production';
-        _this.sliderStyle = null;
-        _this.tooltipDir = null;
-        _this.tooltipStyle = null;
-        _this.fooWidth = 100;
-        _this.fooHeight = 6;
         return _this;
     }
     Object.defineProperty(VueSliderComponent.prototype, "dotWidthVal", {
@@ -530,14 +501,14 @@ var VueSliderComponent = (function (_super) {
     });
     Object.defineProperty(VueSliderComponent.prototype, "flowDirection", {
         get: function () {
-            return "vue-slider-" + (this.direction + (this.reverse ? '-reverse' : ''));
+            return "" + (this.reverse ? 'vue-slider-reverse' : 'vue-slider-normal');
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(VueSliderComponent.prototype, "tooltipDirection", {
         get: function () {
-            return this.tooltipDir || (this.direction === 'vertical' ? 'left' : 'top');
+            return this.tooltipDir || 'top';
         },
         enumerable: true,
         configurable: true
@@ -570,9 +541,29 @@ var VueSliderComponent = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(VueSliderComponent.prototype, "slider", {
+    Object.defineProperty(VueSliderComponent.prototype, "sliderContainerStyle", {
         get: function () {
-            return this.$refs.dot;
+            return this.sliderContainer.style;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(VueSliderComponent.prototype, "sliderContainerHeight", {
+        get: function () {
+            if (!this.sliderContainer) {
+                return 6;
+            }
+            return this.sliderContainer.clientHeight;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(VueSliderComponent.prototype, "sliderContainerWidth", {
+        get: function () {
+            if (!this.sliderContainer) {
+                return 0;
+            }
+            return this.sliderContainer.clientWidth;
         },
         enumerable: true,
         configurable: true
@@ -656,7 +647,7 @@ var VueSliderComponent = (function (_super) {
     });
     Object.defineProperty(VueSliderComponent.prototype, "gap", {
         get: function () {
-            return this.size / this.total;
+            return (this.size - (this.dotSize || 0)) / this.total;
         },
         enumerable: true,
         configurable: true
@@ -684,10 +675,7 @@ var VueSliderComponent = (function (_super) {
     });
     Object.defineProperty(VueSliderComponent.prototype, "wrapStyles", {
         get: function () {
-            return this.direction === 'vertical' ? {
-                height: typeof this.height === 'number' ? this.height + "px" : this.height,
-                padding: this.dotHeightVal / 2 + "px " + this.dotWidthVal / 2 + "px"
-            } : {
+            return {
                 width: typeof this.width === 'number' ? this.width + "px" : this.width,
                 padding: this.dotHeightVal / 2 + "px " + this.dotWidthVal / 2 + "px"
             };
@@ -698,11 +686,27 @@ var VueSliderComponent = (function (_super) {
     Object.defineProperty(VueSliderComponent.prototype, "sliderStyles", {
         get: function () {
             if (typeof this.sliderStyle === 'function') {
+                console.log('function');
                 return this.sliderStyle(this.val, this.currentIndex);
             }
             else {
+                console.log('value', this.sliderStyle);
                 return this.sliderStyle;
             }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(VueSliderComponent.prototype, "sliderOffsetStyle", {
+        get: function () {
+            if (this.reverse) {
+                return {
+                    left: this.size - (this.dotSize * 1.5) + "px"
+                };
+            }
+            return {
+                left: this.dotSize / 2 + "px"
+            };
         },
         enumerable: true,
         configurable: true
@@ -721,38 +725,17 @@ var VueSliderComponent = (function (_super) {
     });
     Object.defineProperty(VueSliderComponent.prototype, "elemStyles", {
         get: function () {
-            return this.direction === 'vertical' ? {
-                width: this.width + "px",
-                height: '100%'
-            } : {
+            var baseStyle = {
                 height: this.height + "px"
             };
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(VueSliderComponent.prototype, "dotStyles", {
-        get: function () {
-            this.printError('dotStyles is using foo dimensions');
-            return this.direction === 'vertical' ? {
-                width: this.dotWidthVal + "px",
-                height: this.dotHeightVal + "px",
-                left: (-(this.dotWidthVal - this.fooWidth) / 2) + "px"
-            } : {
-                width: this.dotWidthVal + "px",
-                height: this.dotHeightVal + "px",
-                top: (-(this.dotHeightVal - this.fooHeight) / 2) + "px"
-            };
+            return baseStyle;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(VueSliderComponent.prototype, "piecewiseDotStyle", {
         get: function () {
-            return this.direction === 'vertical' ? {
-                width: this.width + "px",
-                height: this.width + "px"
-            } : {
+            return {
                 width: this.height + "px",
                 height: this.height + "px"
             };
@@ -762,31 +745,20 @@ var VueSliderComponent = (function (_super) {
     });
     Object.defineProperty(VueSliderComponent.prototype, "piecewiseDotWrap", {
         get: function () {
-            this.printError('piecewiseDotWrap is using foo dimensions');
-            if (!this.piecewise && !this.piecewiseLabel) {
+            if (!(this.piecewise || this.piecewiseLabel)) {
                 return false;
             }
             var arr = [];
             for (var i = 0; i <= this.total; i++) {
-                var currentStyle = void 0;
-                if (this.direction === 'vertical') {
-                    currentStyle = {
-                        bottom: this.gap * i - this.fooWidth / 2 + "px",
-                        left: 0
-                    };
-                }
-                else {
-                    currentStyle = {
-                        left: this.gap * i - this.fooHeight / 2 + "px",
-                        top: 0
-                    };
-                }
+                var position = (this.gap * i) + 8;
+                var currentStyle = {
+                    left: [position] + "px"
+                };
                 var index = this.reverse ? (this.total - i) : i;
                 var label = this.data ? this.data[index] : (this.spacing * index) + this.min;
                 arr.push({
                     currentStyle: currentStyle,
                     label: this.formatter ? this.formatting(label) : label,
-                    inRange: index >= this.indexRange[0] && index <= this.indexRange[1]
                 });
             }
             return arr;
@@ -821,6 +793,10 @@ var VueSliderComponent = (function (_super) {
             });
         }
     };
+    VueSliderComponent.prototype.updateSliderStyle = function () {
+        this.slider.style.width = this.dotWidthVal + "px";
+        this.slider.style.height = this.dotHeightVal + "px";
+    };
     VueSliderComponent.prototype.bindEvents = function () {
         var patchedAddEventListener = document.addEventListener;
         patchedAddEventListener('touchmove', this.onTouchMove, { passive: false });
@@ -843,7 +819,7 @@ var VueSliderComponent = (function (_super) {
     };
     VueSliderComponent.prototype.getPos = function (e) {
         this.realTime && this.getStaticData();
-        return this.direction === 'vertical' ? (this.reverse ? (e.pageY - this.offset) : (this.size - (e.pageY - this.offset))) : (this.reverse ? (this.size - (e.clientX - this.offset)) : (e.clientX - this.offset));
+        return (this.reverse ? (this.size - (e.clientX - this.offset)) : (e.clientX - this.offset));
     };
     VueSliderComponent.prototype.wrapClick = function (e) {
         if (this.isDisabled || !this.clickable) {
@@ -956,11 +932,21 @@ var VueSliderComponent = (function (_super) {
         this.setTransform(this.position);
         this.flag || this.setTransitionTime(0);
     };
-    VueSliderComponent.prototype.setTransform = function (val) {
-        this.printError("setTransform(" + val + ")");
+    VueSliderComponent.prototype.setTransform = function (position) {
+        var value = (position - (this.dotWidthVal / 2)) * (this.reverse ? -1 : 1);
+        var translateValue = "translateX(" + value + "px)";
+        var progressSize = this.position - position + "px";
+        var progressPos = position + "px";
+        this.slider.style.transform = translateValue;
+        this.slider.style.webkitTransform = translateValue;
+        this.progressBar.style.width = position + this.dotSize + "px";
+        this.progressBar.style[this.reverse ? 'right' : 'left'] = '0';
     };
     VueSliderComponent.prototype.setTransitionTime = function (time) {
-        this.printError("setTransitionTime(" + time + ")");
+        this.sliderContainerStyle.transitionDuration = time + "s";
+        this.sliderContainerStyle.webkitTransitionDuration = time + "s";
+        this.progressBar.style.transitionDuration = time + "s";
+        this.progressBar.style.webkitTransitionDuration = time + "s";
     };
     VueSliderComponent.prototype.limitValue = function (val) {
         var _this = this;
@@ -992,15 +978,17 @@ var VueSliderComponent = (function (_super) {
         return this.currentIndex;
     };
     VueSliderComponent.prototype.getStaticData = function () {
-        if (!this.$refs.elem) {
+        if (!this.sliderContainer) {
             return;
         }
-        var element = this.$refs.elem;
-        this.size = this.direction === 'vertical' ? element.offsetHeight : element.offsetWidth;
-        this.offset = this.direction === 'vertical' ? (element.getBoundingClientRect().top + window.pageYOffset || document.documentElement.scrollTop) : element.getBoundingClientRect().left;
+        var element = this.sliderContainer;
+        if (element) {
+            this.size = element.offsetWidth;
+            this.offset = element.getBoundingClientRect().left;
+        }
     };
     VueSliderComponent.prototype.refresh = function () {
-        if (this.$refs.elem) {
+        if (this.sliderContainer) {
             this.getStaticData();
             this.setPosition();
         }
@@ -1012,7 +1000,11 @@ var VueSliderComponent = (function (_super) {
     };
     VueSliderComponent.prototype.mounted = function () {
         var _this = this;
+        this.sliderContainer = this.$refs.elem;
+        this.slider = this.$refs.dot;
+        this.progressBar = this.$refs.progress;
         this.isComponentExists = true;
+        this.updateSliderStyle();
         if (typeof window === 'undefined' || typeof document === 'undefined') {
             return this.printError('[VueSlider error]: window or document is undefined, can not be initialization.');
         }
@@ -1041,82 +1033,79 @@ var VueSliderComponent = (function (_super) {
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
     ], VueSliderComponent.prototype, "isComponentExists", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 'auto' })
     ], VueSliderComponent.prototype, "width", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 6 })
     ], VueSliderComponent.prototype, "height", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: null })
     ], VueSliderComponent.prototype, "data", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 16 })
     ], VueSliderComponent.prototype, "dotSize", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: null })
     ], VueSliderComponent.prototype, "dotWidth", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: null })
     ], VueSliderComponent.prototype, "dotHeight", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 0 })
     ], VueSliderComponent.prototype, "min", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 100 })
     ], VueSliderComponent.prototype, "max", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 1 })
     ], VueSliderComponent.prototype, "interval", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: true })
     ], VueSliderComponent.prototype, "show", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
     ], VueSliderComponent.prototype, "disabled", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: true })
     ], VueSliderComponent.prototype, "piecewise", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 'always' })
     ], VueSliderComponent.prototype, "tooltip", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 'auto' })
     ], VueSliderComponent.prototype, "eventType", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
-    ], VueSliderComponent.prototype, "direction", void 0);
-    __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
     ], VueSliderComponent.prototype, "reverse", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
     ], VueSliderComponent.prototype, "lazy", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: true })
     ], VueSliderComponent.prototype, "clickable", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 0.5 })
     ], VueSliderComponent.prototype, "speed", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
     ], VueSliderComponent.prototype, "realTime", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
     ], VueSliderComponent.prototype, "stopPropagation", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 0 })
     ], VueSliderComponent.prototype, "value", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
     ], VueSliderComponent.prototype, "piecewiseLabel", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: process && process.env && process.env.NODE_ENV !== 'production' })
     ], VueSliderComponent.prototype, "debug", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: null })
     ], VueSliderComponent.prototype, "sliderStyle", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: null })
     ], VueSliderComponent.prototype, "tooltipDir", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
@@ -1126,15 +1115,12 @@ var VueSliderComponent = (function (_super) {
     ], VueSliderComponent.prototype, "piecewiseStyle", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
-    ], VueSliderComponent.prototype, "piecewiseActiveStyle", void 0);
-    __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
-    ], VueSliderComponent.prototype, "processStyle", void 0);
+    ], VueSliderComponent.prototype, "progressBarStyle", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
     ], VueSliderComponent.prototype, "bgStyle", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: null })
     ], VueSliderComponent.prototype, "tooltipStyle", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
@@ -2707,7 +2693,7 @@ var render = function() {
               {
                 ref: "dot",
                 class: [_vm.tooltipStatus, "vue-slider-dot"],
-                style: [_vm.dotStyles, _vm.sliderStyles],
+                style: [_vm.sliderOffsetStyle, _vm.sliderStyles],
                 on: { mousedown: _vm.onMoveStart, touchstart: _vm.onMoveStart }
               },
               [
@@ -2767,12 +2753,7 @@ var render = function() {
                       _vm.piecewise
                         ? _c("span", {
                             staticClass: "vue-slider-piecewise-dot",
-                            style: [
-                              _vm.piecewiseStyle,
-                              piecewiseObj.inRange
-                                ? _vm.piecewiseActiveStyle
-                                : null
-                            ]
+                            style: piecewiseObj.currentStyle
                           })
                         : _vm._e()
                     ],
@@ -2793,12 +2774,7 @@ var render = function() {
                             "span",
                             {
                               staticClass: "vue-slider-piecewise-label",
-                              style: [
-                                _vm.labelStyle,
-                                piecewiseObj.inRange
-                                  ? _vm.labelActiveStyle
-                                  : null
-                              ]
+                              style: piecewiseObj.labelStyle
                             },
                             [
                               _vm._v(
@@ -2825,34 +2801,13 @@ var render = function() {
           ),
           _vm._v(" "),
           _c("div", {
-            ref: "process",
-            staticClass: "vue-slider-process",
-            style: _vm.processStyle
+            ref: "progress",
+            staticClass: "vue-slider-progress",
+            style: _vm.progressBarStyle
           })
         ],
         2
-      ),
-      _vm._v(" "),
-      !_vm.isRange && !_vm.data
-        ? _c("input", {
-            directives: [
-              {
-                name: "model",
-                rawName: "v-model",
-                value: _vm.val,
-                expression: "val"
-              }
-            ],
-            staticClass: "vue-slider-sr-only",
-            attrs: { type: "range", min: _vm.min, max: _vm.max },
-            domProps: { value: _vm.val },
-            on: {
-              __r: function($event) {
-                _vm.val = $event.target.value
-              }
-            }
-          })
-        : _vm._e()
+      )
     ]
   )
 }

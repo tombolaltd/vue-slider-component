@@ -1,13 +1,12 @@
 export declare type cssSize = number | string;
-export declare type direction = 'horizontal' | 'vertical';
 export declare type eventType = 'auto' | 'none';
 export declare type formatterFunction = (val: number) => string;
 export declare type numberRange = [number, number];
 export declare type style = object | any[];
-export declare type styleFunction = (val: number, index: number) => style;
+export declare type styleFunction = (val: number, index: number) => CSSStyleDeclaration;
 export declare type tooltipVisibility = 'hover' | 'always' | boolean;
 export declare type tooltipDir = 'top' | 'bottom' | 'left' | 'right';
-export declare type vueOrElement = Vue | Element | Vue[] | Element[];
+export declare type VueElement = Vue & HTMLElement;
 export interface IEventPosition {
     readonly clientX: number;
     readonly clientY: number;
@@ -38,7 +37,6 @@ export default class VueSliderComponent extends Vue {
     piecewise: boolean;
     tooltip: tooltipVisibility;
     eventType: eventType;
-    direction: direction;
     reverse: boolean;
     lazy: boolean;
     clickable: boolean;
@@ -52,14 +50,14 @@ export default class VueSliderComponent extends Vue {
     tooltipDir: tooltipDir | null;
     formatter: string | formatterFunction;
     piecewiseStyle: object;
-    piecewiseActiveStyle: object;
-    processStyle: object;
+    progressBarStyle: object;
     bgStyle: object;
     tooltipStyle: style | styleFunction | null;
     labelStyle: object;
     labelActiveStyle: object;
-    fooWidth: number;
-    fooHeight: number;
+    private slider;
+    private sliderContainer;
+    private progressBar;
     constructor();
     readonly dotWidthVal: number;
     readonly dotHeightVal: number;
@@ -69,7 +67,9 @@ export default class VueSliderComponent extends Vue {
     readonly tooltipClass: [string, string];
     readonly isDisabled: boolean;
     readonly disabledClass: string;
-    readonly slider: vueOrElement;
+    readonly sliderContainerStyle: CSSStyleDeclaration;
+    readonly sliderContainerHeight: number;
+    readonly sliderContainerWidth: number;
     readonly minimum: number;
     val: number;
     readonly currentIndex: number;
@@ -84,19 +84,19 @@ export default class VueSliderComponent extends Vue {
     readonly valueLimit: numberRange;
     readonly wrapStyles: style;
     readonly sliderStyles: style | null;
+    readonly sliderOffsetStyle: style;
     readonly tooltipStyles: style | null;
     readonly elemStyles: style;
-    readonly dotStyles: style;
     readonly piecewiseDotStyle: style;
     readonly piecewiseDotWrap: Array<{
         currentStyle: style;
         label: string;
-        inRange: boolean;
     }> | boolean;
     onValueChanged(val: number): void;
     onMaxChange(val: number): void;
     onMinChange(val: number): void;
     onShowChanged(val: boolean): void;
+    updateSliderStyle(): void;
     bindEvents(): void;
     unbindEvents(): void;
     formatting(value: any): string;
@@ -112,7 +112,7 @@ export default class VueSliderComponent extends Vue {
     setIndex(val: number): void;
     setValue(val: number, noCallback?: any, speed?: number): void;
     setPosition(speed?: number): void;
-    setTransform(val: number): void;
+    setTransform(position: number): void;
     setTransitionTime(time: number): void;
     limitValue(val: number): any;
     syncValue(noCallback?: boolean): void;

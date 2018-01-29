@@ -1,6 +1,6 @@
 <template>
-  <div ref="wrap" :class="['vue-slider-component', flowDirection, disabledClass, { 'vue-slider-has-label': piecewiseLabel }]" v-show="show" :style="wrapStyles" @click="wrapClick">
-    <div ref="elem" aria-hidden="true" class="vue-slider" :style="[elemStyles, bgStyle]">
+  <div ref="wrap" :class="['vue-slider-component', flowDirection, disabledClass, { 'vue-slider-has-label': showItemLabel }]" v-show="show" :style="wrapStyles" @click="wrapClick">
+    <div ref="track" aria-hidden="true" class="vue-slider-track" :style="[trackStyles, bgStyle]">
       <template>
         <div ref="dot" :class="[tooltipStatus, 'vue-slider-dot']" :style="[sliderOffsetStyle, sliderStyles]" @mousedown="onMoveStart" @touchstart="onMoveStart" v-cloak>
           <span :class="['vue-slider-tooltip-' + tooltipDirection, 'vue-slider-tooltip-wrap']">
@@ -10,14 +10,14 @@
           </span>
         </div>
       </template>
-      <ul class="vue-slider-piecewise" v-cloak>
-        <li v-for="(piecewiseObj, index) in piecewiseDotWrap" class="vue-slider-piecewise-item" :style="[piecewiseDotStyle, piecewiseObj.style]" :key="index">
-          <slot name="piecewise" :label="piecewiseObj.label" :index="index" :first="index === 0" :last="index === piecewiseDotWrap.length - 1" :active="piecewiseObj.inRange">
-            <span v-if="piecewise" class="vue-slider-piecewise-dot" :style="piecewiseObj.currentStyle"></span>
+      <ul class="vue-slider-item" v-cloak>
+        <li v-for="(itemDynamicStyle, index) in itemDynamicStyling" class="vue-slider-item-container" :style="[itemContainerStyle, itemDynamicStyle.style]" :key="index">
+          <slot name="item" :label="itemDynamicStyle.label" :index="index" :first="index === 0" :last="index === itemDynamicStyling.length - 1" :active="itemDynamicStyle.inRange">
+            <span v-if="showItems" class="vue-slider-item-dot" :style="itemDynamicStyle.currentStyle"></span>
           </slot>
-          <slot name="label" :label="piecewiseObj.label" :index="index" :first="index === 0" :last="index === piecewiseDotWrap.length - 1" :active="piecewiseObj.inRange">
-            <span v-if="piecewiseLabel" class="vue-slider-piecewise-label" :style="piecewiseObj.labelStyle">
-              {{ piecewiseObj.label }}
+          <slot name="label" :label="itemDynamicStyle.label" :index="index" :first="index === 0" :last="index === itemDynamicStyling.length - 1" :active="itemDynamicStyle.inRange">
+            <span v-if="showItemLabel" class="vue-slider-item-label" :style="itemDynamicStyle.labelStyle">
+              {{ itemDynamicStyle.label }}
             </span>
           </slot>
         </li>
@@ -52,8 +52,6 @@ import { PatchedEventListener } from './event-listener-patch';
 
   @Component({ })
   export default class VueSliderComponent extends Vue {
-
-    public offset: number = 20; // TODO - this is 100% hacked in.
 
     @Provide()
     public flag: boolean = false;
@@ -101,7 +99,7 @@ import { PatchedEventListener } from './event-listener-patch';
     public disabled: boolean;
 
     @Prop({default: true})
-    public piecewise: boolean;
+    public showItems: boolean;
 
     @Prop({default: 'always'})
     public tooltip: tooltipVisibility;
@@ -131,7 +129,7 @@ import { PatchedEventListener } from './event-listener-patch';
     public value: number;
 
     @Prop({default: false})
-    public piecewiseLabel: boolean;
+    public showItemLabel: boolean;
 
     @Prop({default: process && process.env && process.env.NODE_ENV !== 'production'})
     public debug: boolean;
@@ -146,7 +144,7 @@ import { PatchedEventListener } from './event-listener-patch';
     public formatter: string | formatterFunction;
 
     @Prop()
-    public piecewiseStyle: object;
+    public itemStyle: object;
 
     @Prop()
     public progressBarStyle: object;
@@ -163,8 +161,8 @@ import { PatchedEventListener } from './event-listener-patch';
     @Prop()
     public labelActiveStyle: object;
 
-    private slider: VueElement;
-    private sliderContainer: VueElement;
+    private thumb: VueElement;
+    private track: VueElement;
     private progressBar: VueElement;
 
     constructor() {
@@ -203,24 +201,24 @@ import { PatchedEventListener } from './event-listener-patch';
         return this.disabled ? 'vue-slider-disabled' : '';
     }
 
-    public get sliderContainerStyle(): CSSStyleDeclaration {
-      return this.sliderContainer.style;
+    public get trackContainerStyle(): CSSStyleDeclaration {
+      return this.track.style;
     }
 
     public get sliderContainerHeight(): number {
-      if (!this.sliderContainer)
+      if (!this.track)
       {
         return 6;
       }
-      return this.sliderContainer.clientHeight;
+      return this.track.clientHeight;
     }
 
     public get sliderContainerWidth(): number {
-      if (!this.sliderContainer)
+      if (!this.track)
       {
         return 0;
       }
-      return this.sliderContainer.clientWidth;
+      return this.track.clientWidth;
     }
 
     public get minimum(): number {
@@ -298,16 +296,10 @@ import { PatchedEventListener } from './event-listener-patch';
         };
     }
 
-    public get sliderStyles(): style | null{
+    public get sliderStyles(): style | null {
         if (typeof this.sliderStyle === 'function') {
-          /* tslint:disable */
-          console.log('function');
-          /* tslint:enable */
           return this.sliderStyle(this.val, this.currentIndex);
         } else {
-          /* tslint:disable */
-          console.log('value', this.sliderStyle);
-          /* tslint:enable */
           return this.sliderStyle;
         }
     }
@@ -332,23 +324,22 @@ import { PatchedEventListener } from './event-listener-patch';
         }
     }
 
-    public get elemStyles(): style {
+    public get trackStyles(): style {
       const baseStyle: style = {
         height: `${this.height}px`
       };
       return baseStyle;
     }
 
-    // TODO: this is really the dot container.
-    public get piecewiseDotStyle(): style {
+    public get itemContainerStyle(): style {
         return {
           width: `${this.height}px`,
           height: `${this.height}px`
         };
     }
 
-    public get piecewiseDotWrap(): Array<{currentStyle: style, label: string}> | boolean {
-        if (!(this.piecewise || this.piecewiseLabel)) {
+    public get itemDynamicStyling(): Array<{currentStyle: style, label: string}> | boolean {
+        if (!(this.showItems || this.showItemLabel)) {
           return false;
         }
 
@@ -407,9 +398,9 @@ import { PatchedEventListener } from './event-listener-patch';
     }
 
     public updateSliderStyle(): void {
-      this.slider.style.width = `${this.dotWidthVal}px`;
-      this.slider.style.height = `${this.dotHeightVal}px`;
-      // this.slider.style.left =  `${(-(this.dotWidthVal / 4))}px`;  /*`${(-(this.dotWidthVal - this.sliderContainerWidth) / 2)}px`;*/
+      this.thumb.style.width = `${this.dotWidthVal}px`;
+      this.thumb.style.height = `${this.dotHeightVal}px`;
+      // this.thumb.style.left =  `${(-(this.dotWidthVal / 4))}px`;  /*`${(-(this.dotWidthVal - this.sliderContainerWidth) / 2)}px`;*/
     }
 
     public bindEvents(): void {
@@ -436,16 +427,20 @@ import { PatchedEventListener } from './event-listener-patch';
       return typeof this.formatter === 'string' ? this.formatter.replace(/\{value\}/, value) : this.formatter(value);
     }
 
-    public getPos(e: IEventPosition): number {
-      this.realTime && this.getStaticData();
-      return (this.reverse ? (this.size - (e.clientX - this.offset)) : (e.clientX - this.offset));
+    public getItemPosition(e: IEventPosition): number {
+      if (this.realTime) {
+        // Force update of static data
+        this.updateTrackSize();
+      }
+
+      return this.reverse ? (this.size - (e.clientX - this.thumb.clientWidth)) : (e.clientX - (2 * this.thumb.clientWidth));
     }
 
     public wrapClick (e: IEventPosition): boolean {
       if (this.isDisabled || !this.clickable) {
         return false;
       }
-      const pos = this.getPos(e);
+      const pos = this.getItemPosition(e);
       this.setValueOnPos(pos);
       return true;
     }
@@ -475,7 +470,7 @@ import { PatchedEventListener } from './event-listener-patch';
 
       event.preventDefault();
 
-      this.setValueOnPos(this.getPos(event), true);
+      this.setValueOnPos(this.getItemPosition(event), true);
     }
 
     public onTouchMove (event: TouchEvent): void {
@@ -490,7 +485,7 @@ import { PatchedEventListener } from './event-listener-patch';
       event.preventDefault();
 
       if (event.targetTouches[0]) {
-        this.setValueOnPos(this.getPos(event.targetTouches[0]), true);
+        this.setValueOnPos(this.getItemPosition(event.targetTouches[0]), true);
       }
     }
 
@@ -573,16 +568,16 @@ import { PatchedEventListener } from './event-listener-patch';
       const progressSize = `${this.position - position}px`;
       const progressPos = `${position}px`;
 
-      this.slider.style.transform = translateValue;
-      this.slider.style.webkitTransform = translateValue;
-      // this.sliderContainerStyle.msTransform = translateValue;
+      this.thumb.style.transform = translateValue;
+      this.thumb.style.webkitTransform = translateValue;
+      // this.trackContainerStyle.msTransform = translateValue;
       this.progressBar.style.width = `${position + this.dotSize}px`;
       this.progressBar.style[this.reverse ? 'right' : 'left'] = '0';
     }
 
     public setTransitionTime(time: number): void {
-      this.sliderContainerStyle.transitionDuration = `${time}s`;
-      this.sliderContainerStyle.webkitTransitionDuration = `${time}s`;
+      this.trackContainerStyle.transitionDuration = `${time}s`;
+      this.trackContainerStyle.webkitTransitionDuration = `${time}s`;
       this.progressBar.style.transitionDuration = `${time}s`;
       this.progressBar.style.webkitTransitionDuration = `${time}s`;
     }
@@ -620,21 +615,16 @@ import { PatchedEventListener } from './event-listener-patch';
       return this.currentIndex;
     }
 
-    public getStaticData(): any {
-      if (!this.sliderContainer) {
-        return;
-      }
-
-      const element = this.sliderContainer;
+    public updateTrackSize(): any {
+      const element = this.track;
       if (element) {
         this.size = element.offsetWidth;
-        this.offset = element.getBoundingClientRect().left;
       }
     }
 
     public refresh(): void {
-      if (this.sliderContainer) {
-        this.getStaticData();
+      if (this.track) {
+        this.updateTrackSize();
         this.setPosition();
       }
     }
@@ -648,8 +638,8 @@ import { PatchedEventListener } from './event-listener-patch';
     }
 
     public mounted(): void {
-      this.sliderContainer = this.$refs.elem as VueElement;
-      this.slider = this.$refs.dot as VueElement;
+      this.track = this.$refs.track as VueElement;
+      this.thumb = this.$refs.dot as VueElement;
       this.progressBar = this.$refs.progress as VueElement;
       this.isComponentExists = true;
 
@@ -660,7 +650,7 @@ import { PatchedEventListener } from './event-listener-patch';
 
       this.$nextTick(() => {
         if (this.isComponentExists) {
-          this.getStaticData();
+          this.updateTrackSize();
           this.setValue(this.limitValue(this.value), true, 0);
           this.bindEvents();
         }
@@ -698,7 +688,7 @@ import { PatchedEventListener } from './event-listener-patch';
         left: 0;
         z-index: 50;
       }
-      .vue-slider-piecewise-label, .vue-slider-component.vue-slider-reverse .vue-slider-piecewise-label {
+      .vue-slider-item-label, .vue-slider-component.vue-slider-reverse .vue-slider-item-label {
           position: absolute;
           display: inline-block;
           top: 100%;
@@ -718,7 +708,7 @@ import { PatchedEventListener } from './event-listener-patch';
         right: 0;
       }
     }
-    .vue-slider {
+    .vue-slider-track {
       position: relative;
       display: block;
       border-radius: 15px;
@@ -833,14 +823,14 @@ import { PatchedEventListener } from './event-listener-patch';
         }
       }
     }
-    .vue-slider-piecewise-item {
+    .vue-slider-item-container {
       position: absolute;
       width: 8px;
       height: 8px;
       z-index: 10;
 
     }
-    .vue-slider-piecewise {
+    .vue-slider-item {
       position: absolute;
       width: 100%;
       padding: 0;
@@ -850,7 +840,7 @@ import { PatchedEventListener } from './event-listener-patch';
       height: 100%;
       list-style: none;
     }
-    .vue-slider-piecewise-dot {
+    .vue-slider-item-dot {
       position: absolute;
       left: 50%;
       top: 50%;

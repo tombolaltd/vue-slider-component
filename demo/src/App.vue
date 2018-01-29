@@ -67,7 +67,7 @@ body {
      .vue-slider {
       background-color: #CCCCCC;
     }
-    .vue-slider-piecewise-dot {
+    .vue-slider-item-dot {
       background-color: #FFFFFF;
     }
     .vue-slider-tooltip {
