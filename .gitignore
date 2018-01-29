@@ -5,3 +5,11 @@ npm-debug.log
 .vscode/
 yarn.lock
 yarn-error.log
+**/bower_components/
+**/node_modules/
+**/.vscode/settings.json
+*.DS_Store
+npm-debug.log
+lerna-debug.log
+**/reports/
+coverage/

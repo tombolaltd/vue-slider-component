@@ -1,7 +1,7 @@
 {
   "name": "vue-slider-component",
   "version": "2.5.2",
-  "description": "Can use the Slider component in vue1.x and vue2.x",
+  "description": "Slider component for vue2.x",
   "keywords": [
     "vue",
     "slider",
@@ -14,36 +14,47 @@
     "type": "git",
     "url": "git+https://github.com/NightCatSama/vue-slider-component.git"
   },
-  "author": "NightCatSama <642163903@qq.com>",
+  "author": "NightCatSama / tombola ltd",
   "licenses": "MIT",
   "bugs": {
-    "url": "https://github.com/NightCatSama/vue-slider-component/issues"
+    "url": "https://github.com/tombolaltd/vue-slider-component/issues"
   },
-  "homepage": "https://github.com/NightCatSama/vue-slider-component#readme",
+  "homepage": "https://github.com/tombolaltd/vue-slider-component#readme",
   "scripts": {
-    "build": "rm -rf ./dist && webpack --colors --hide-modules"
+    "dev": "webpack-dev-server --config build/webpack.dev.conf.js",
+    "build": "webpack --config build/webpack.build.conf.js --display-error-details"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.4",
-    "babel-core": "^6.24.0",
-    "babel-loader": "^6.4.1",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-es2015": "^6.24.0",
-    "babel-preset-stage-2": "^6.22.0",
-    "babel-runtime": "^6.23.0",
-    "css-loader": "^0.23.1",
-    "postcss-load": "^0.1.6",
-    "style-loader": "^0.15.0",
-    "vue": "^2.2.4",
-    "vue-html-loader": "^1.2.4",
-    "vue-loader": "^11.1.4",
-    "vue-style-loader": "^2.0.4",
-    "vue-template-compiler": "^2.2.4",
-    "webpack": "^2.2.1"
+    "clean-webpack-plugin": "^0.1.17",
+    "core-js": "^2.5.3",
+    "css-loader": "0.28.7",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "html-webpack-plugin": "^2.30.1",
+    "leading-line-remover-loader": "git+ssh://git@github.com/tombolaltd/leading-line-remover-loader.git#1.0.0",
+    "less": "2.7.2",
+    "less-loader": "4.0.5",
+    "lesshat": "4.1.0",
+    "rimraf": "^2.6.1",
+    "style-loader": "0.19.0",
+    "ts-loader": "^2.3.7",
+    "tsconfig-paths-webpack-plugin": "1.2.0",
+    "tslint": "5.8.0",
+    "tslint-loader": "3.5.3",
+    "typedoc": "^0.8.0",
+    "typescript": "2.4.0",
+    "vue": "2.4.3",
+    "vue-loader": "13.5.0",
+    "vue-property-decorator": "6.0.0",
+    "vue-style-loader": "3.0.3",
+    "vue-template-compiler": "2.4.3",
+    "vue-ts-locale": "git://github.com/tombolaltd/vue-ts-locale.git#2.0.0",
+    "webpack": "3.10.0",
+    "webpack-dev-server": "2.7.1",
+    "webpack-merge": "^4.1.0"
   },
-  "browserify": {
-    "transform": [
-      "vueify"
-    ]
+  "peerDependencies": {
+    "vue": "^2.4.3",
+    "vue-property-decorator": "^6.0.0"
   }
 }
