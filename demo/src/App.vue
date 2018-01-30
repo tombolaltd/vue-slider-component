@@ -18,11 +18,11 @@
     </div>
     <div class="demo-container">
       <h2>Tooltip on Hover</h2>
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" tooltip="hover" ></vue-slider>
+      <vue-slider v-model="value" :height="16" min="1" max="90" :sliderStyle="sliderStyle" tooltip="hover" ></vue-slider>
     </div>
      <div class="demo-container">
-       <h2>Interval</h2>
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :interval="5"></vue-slider>
+       <h2>Interval & initial value (Different value, Max/Min )</h2>
+      <vue-slider :value="5" :height="16" min="0" max="100" :sliderStyle="sliderStyle" :interval="5"></vue-slider>
     </div>
     <div class="demo-container">
       <h2>Disabled</h2>

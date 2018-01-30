@@ -478,7 +478,6 @@ var VueSliderComponent = (function (_super) {
     __extends(VueSliderComponent, _super);
     function VueSliderComponent() {
         var _this = _super.call(this) || this;
-        _this.offset = 20;
         _this.flag = false;
         _this.size = 0;
         _this.currentValue = 0;
@@ -541,29 +540,29 @@ var VueSliderComponent = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(VueSliderComponent.prototype, "sliderContainerStyle", {
+    Object.defineProperty(VueSliderComponent.prototype, "trackContainerStyle", {
         get: function () {
-            return this.sliderContainer.style;
+            return this.track.style;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(VueSliderComponent.prototype, "sliderContainerHeight", {
         get: function () {
-            if (!this.sliderContainer) {
+            if (!this.track) {
                 return 6;
             }
-            return this.sliderContainer.clientHeight;
+            return this.track.clientHeight;
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(VueSliderComponent.prototype, "sliderContainerWidth", {
         get: function () {
-            if (!this.sliderContainer) {
+            if (!this.track) {
                 return 0;
             }
-            return this.sliderContainer.clientWidth;
+            return this.track.clientWidth;
         },
         enumerable: true,
         configurable: true
@@ -686,11 +685,9 @@ var VueSliderComponent = (function (_super) {
     Object.defineProperty(VueSliderComponent.prototype, "sliderStyles", {
         get: function () {
             if (typeof this.sliderStyle === 'function') {
-                console.log('function');
                 return this.sliderStyle(this.val, this.currentIndex);
             }
             else {
-                console.log('value', this.sliderStyle);
                 return this.sliderStyle;
             }
         },
@@ -723,7 +720,7 @@ var VueSliderComponent = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(VueSliderComponent.prototype, "elemStyles", {
+    Object.defineProperty(VueSliderComponent.prototype, "trackStyles", {
         get: function () {
             var baseStyle = {
                 height: this.height + "px"
@@ -733,7 +730,7 @@ var VueSliderComponent = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(VueSliderComponent.prototype, "piecewiseDotStyle", {
+    Object.defineProperty(VueSliderComponent.prototype, "itemContainerStyle", {
         get: function () {
             return {
                 width: this.height + "px",
@@ -743,9 +740,9 @@ var VueSliderComponent = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(VueSliderComponent.prototype, "piecewiseDotWrap", {
+    Object.defineProperty(VueSliderComponent.prototype, "itemDynamicStyling", {
         get: function () {
-            if (!(this.piecewise || this.piecewiseLabel)) {
+            if (!(this.showItems || this.showItemLabel)) {
                 return false;
             }
             var arr = [];
@@ -794,8 +791,8 @@ var VueSliderComponent = (function (_super) {
         }
     };
     VueSliderComponent.prototype.updateSliderStyle = function () {
-        this.slider.style.width = this.dotWidthVal + "px";
-        this.slider.style.height = this.dotHeightVal + "px";
+        this.thumb.style.width = this.dotWidthVal + "px";
+        this.thumb.style.height = this.dotHeightVal + "px";
     };
     VueSliderComponent.prototype.bindEvents = function () {
         var patchedAddEventListener = document.addEventListener;
@@ -817,15 +814,17 @@ var VueSliderComponent = (function (_super) {
     VueSliderComponent.prototype.formatting = function (value) {
         return typeof this.formatter === 'string' ? this.formatter.replace(/\{value\}/, value) : this.formatter(value);
     };
-    VueSliderComponent.prototype.getPos = function (e) {
-        this.realTime && this.getStaticData();
-        return (this.reverse ? (this.size - (e.clientX - this.offset)) : (e.clientX - this.offset));
+    VueSliderComponent.prototype.getItemPosition = function (e) {
+        if (this.realTime) {
+            this.updateTrackSize();
+        }
+        return this.reverse ? (this.size - (e.clientX - this.thumb.clientWidth)) : (e.clientX - (2 * this.thumb.clientWidth));
     };
     VueSliderComponent.prototype.wrapClick = function (e) {
         if (this.isDisabled || !this.clickable) {
             return false;
         }
-        var pos = this.getPos(e);
+        var pos = this.getItemPosition(e);
         this.setValueOnPos(pos);
         return true;
     };
@@ -848,7 +847,7 @@ var VueSliderComponent = (function (_super) {
             return;
         }
         event.preventDefault();
-        this.setValueOnPos(this.getPos(event), true);
+        this.setValueOnPos(this.getItemPosition(event), true);
     };
     VueSliderComponent.prototype.onTouchMove = function (event) {
         if (this.stopPropagation) {
@@ -859,7 +858,7 @@ var VueSliderComponent = (function (_super) {
         }
         event.preventDefault();
         if (event.targetTouches[0]) {
-            this.setValueOnPos(this.getPos(event.targetTouches[0]), true);
+            this.setValueOnPos(this.getItemPosition(event.targetTouches[0]), true);
         }
     };
     VueSliderComponent.prototype.onMoveEnd = function (event) {
@@ -937,14 +936,14 @@ var VueSliderComponent = (function (_super) {
         var translateValue = "translateX(" + value + "px)";
         var progressSize = this.position - position + "px";
         var progressPos = position + "px";
-        this.slider.style.transform = translateValue;
-        this.slider.style.webkitTransform = translateValue;
+        this.thumb.style.transform = translateValue;
+        this.thumb.style.webkitTransform = translateValue;
         this.progressBar.style.width = position + this.dotSize + "px";
         this.progressBar.style[this.reverse ? 'right' : 'left'] = '0';
     };
     VueSliderComponent.prototype.setTransitionTime = function (time) {
-        this.sliderContainerStyle.transitionDuration = time + "s";
-        this.sliderContainerStyle.webkitTransitionDuration = time + "s";
+        this.trackContainerStyle.transitionDuration = time + "s";
+        this.trackContainerStyle.webkitTransitionDuration = time + "s";
         this.progressBar.style.transitionDuration = time + "s";
         this.progressBar.style.webkitTransitionDuration = time + "s";
     };
@@ -977,19 +976,15 @@ var VueSliderComponent = (function (_super) {
     VueSliderComponent.prototype.getIndex = function () {
         return this.currentIndex;
     };
-    VueSliderComponent.prototype.getStaticData = function () {
-        if (!this.sliderContainer) {
-            return;
-        }
-        var element = this.sliderContainer;
+    VueSliderComponent.prototype.updateTrackSize = function () {
+        var element = this.track;
         if (element) {
             this.size = element.offsetWidth;
-            this.offset = element.getBoundingClientRect().left;
         }
     };
     VueSliderComponent.prototype.refresh = function () {
-        if (this.sliderContainer) {
-            this.getStaticData();
+        if (this.track) {
+            this.updateTrackSize();
             this.setPosition();
         }
     };
@@ -1000,8 +995,8 @@ var VueSliderComponent = (function (_super) {
     };
     VueSliderComponent.prototype.mounted = function () {
         var _this = this;
-        this.sliderContainer = this.$refs.elem;
-        this.slider = this.$refs.dot;
+        this.track = this.$refs.track;
+        this.thumb = this.$refs.dot;
         this.progressBar = this.$refs.progress;
         this.isComponentExists = true;
         this.updateSliderStyle();
@@ -1010,7 +1005,7 @@ var VueSliderComponent = (function (_super) {
         }
         this.$nextTick(function () {
             if (_this.isComponentExists) {
-                _this.getStaticData();
+                _this.updateTrackSize();
                 _this.setValue(_this.limitValue(_this.value), true, 0);
                 _this.bindEvents();
             }
@@ -1021,23 +1016,8 @@ var VueSliderComponent = (function (_super) {
         this.unbindEvents();
     };
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
-    ], VueSliderComponent.prototype, "flag", void 0);
-    __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
-    ], VueSliderComponent.prototype, "size", void 0);
-    __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
-    ], VueSliderComponent.prototype, "currentValue", void 0);
-    __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
-    ], VueSliderComponent.prototype, "isComponentExists", void 0);
-    __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 'auto' })
-    ], VueSliderComponent.prototype, "width", void 0);
-    __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 6 })
-    ], VueSliderComponent.prototype, "height", void 0);
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: [] })
+    ], VueSliderComponent.prototype, "adHocData", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: null })
     ], VueSliderComponent.prototype, "data", void 0);
@@ -1067,7 +1047,7 @@ var VueSliderComponent = (function (_super) {
     ], VueSliderComponent.prototype, "disabled", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: true })
-    ], VueSliderComponent.prototype, "piecewise", void 0);
+    ], VueSliderComponent.prototype, "showItems", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 'always' })
     ], VueSliderComponent.prototype, "tooltip", void 0);
@@ -1097,7 +1077,7 @@ var VueSliderComponent = (function (_super) {
     ], VueSliderComponent.prototype, "value", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
-    ], VueSliderComponent.prototype, "piecewiseLabel", void 0);
+    ], VueSliderComponent.prototype, "showItemLabel", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: process && process.env && process.env.NODE_ENV !== 'production' })
     ], VueSliderComponent.prototype, "debug", void 0);
@@ -1112,7 +1092,7 @@ var VueSliderComponent = (function (_super) {
     ], VueSliderComponent.prototype, "formatter", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
-    ], VueSliderComponent.prototype, "piecewiseStyle", void 0);
+    ], VueSliderComponent.prototype, "itemStyle", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
     ], VueSliderComponent.prototype, "progressBarStyle", void 0);
@@ -1128,6 +1108,24 @@ var VueSliderComponent = (function (_super) {
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])()
     ], VueSliderComponent.prototype, "labelActiveStyle", void 0);
+    __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
+    ], VueSliderComponent.prototype, "flag", void 0);
+    __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
+    ], VueSliderComponent.prototype, "size", void 0);
+    __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
+    ], VueSliderComponent.prototype, "currentValue", void 0);
+    __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
+    ], VueSliderComponent.prototype, "isComponentExists", void 0);
+    __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 'auto' })
+    ], VueSliderComponent.prototype, "width", void 0);
+    __decorate([
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 6 })
+    ], VueSliderComponent.prototype, "height", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Watch"])('value', { immediate: true, deep: true })
     ], VueSliderComponent.prototype, "onValueChanged", null);
@@ -2672,7 +2670,7 @@ var render = function() {
         "vue-slider-component",
         _vm.flowDirection,
         _vm.disabledClass,
-        { "vue-slider-has-label": _vm.piecewiseLabel }
+        { "vue-slider-has-label": _vm.showItemLabel }
       ],
       style: _vm.wrapStyles,
       on: { click: _vm.wrapClick }
@@ -2681,9 +2679,9 @@ var render = function() {
       _c(
         "div",
         {
-          ref: "elem",
-          staticClass: "vue-slider",
-          style: [_vm.elemStyles, _vm.bgStyle],
+          ref: "track",
+          staticClass: "vue-slider-track",
+          style: [_vm.trackStyles, _vm.bgStyle],
           attrs: { "aria-hidden": "true" }
         },
         [
@@ -2737,49 +2735,49 @@ var render = function() {
           _vm._v(" "),
           _c(
             "ul",
-            { staticClass: "vue-slider-piecewise" },
-            _vm._l(_vm.piecewiseDotWrap, function(piecewiseObj, index) {
+            { staticClass: "vue-slider-item" },
+            _vm._l(_vm.itemDynamicStyling, function(itemDynamicStyle, index) {
               return _c(
                 "li",
                 {
                   key: index,
-                  staticClass: "vue-slider-piecewise-item",
-                  style: [_vm.piecewiseDotStyle, piecewiseObj.style]
+                  staticClass: "vue-slider-item-container",
+                  style: [_vm.itemContainerStyle, itemDynamicStyle.style]
                 },
                 [
                   _vm._t(
-                    "piecewise",
+                    "item",
                     [
-                      _vm.piecewise
+                      _vm.showItems
                         ? _c("span", {
-                            staticClass: "vue-slider-piecewise-dot",
-                            style: piecewiseObj.currentStyle
+                            staticClass: "vue-slider-item-dot",
+                            style: itemDynamicStyle.currentStyle
                           })
                         : _vm._e()
                     ],
                     {
-                      label: piecewiseObj.label,
+                      label: itemDynamicStyle.label,
                       index: index,
                       first: index === 0,
-                      last: index === _vm.piecewiseDotWrap.length - 1,
-                      active: piecewiseObj.inRange
+                      last: index === _vm.itemDynamicStyling.length - 1,
+                      active: itemDynamicStyle.inRange
                     }
                   ),
                   _vm._v(" "),
                   _vm._t(
                     "label",
                     [
-                      _vm.piecewiseLabel
+                      _vm.showItemLabel
                         ? _c(
                             "span",
                             {
-                              staticClass: "vue-slider-piecewise-label",
-                              style: piecewiseObj.labelStyle
+                              staticClass: "vue-slider-item-label",
+                              style: itemDynamicStyle.labelStyle
                             },
                             [
                               _vm._v(
                                 "\n            " +
-                                  _vm._s(piecewiseObj.label) +
+                                  _vm._s(itemDynamicStyle.label) +
                                   "\n          "
                               )
                             ]
@@ -2787,11 +2785,11 @@ var render = function() {
                         : _vm._e()
                     ],
                     {
-                      label: piecewiseObj.label,
+                      label: itemDynamicStyle.label,
                       index: index,
                       first: index === 0,
-                      last: index === _vm.piecewiseDotWrap.length - 1,
-                      active: piecewiseObj.inRange
+                      last: index === _vm.itemDynamicStyling.length - 1,
+                      active: itemDynamicStyle.inRange
                     }
                   )
                 ],

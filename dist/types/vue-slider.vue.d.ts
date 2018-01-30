@@ -1,30 +1,9 @@
-export declare type cssSize = number | string;
-export declare type eventType = 'auto' | 'none';
-export declare type formatterFunction = (val: number) => string;
-export declare type numberRange = [number, number];
-export declare type style = object | any[];
-export declare type styleFunction = (val: number, index: number) => CSSStyleDeclaration;
-export declare type tooltipVisibility = 'hover' | 'always' | boolean;
-export declare type tooltipDir = 'top' | 'bottom' | 'left' | 'right';
-export declare type VueElement = Vue & HTMLElement;
-export interface IEventPosition {
-    readonly clientX: number;
-    readonly clientY: number;
-    readonly pageX: number;
-    readonly pageY: number;
-    readonly screenX: number;
-    readonly screenY: number;
-    readonly target: EventTarget;
-}
+import { eventType, formatterFunction, numberRange, style, styleFunction, tooltipDirection, tooltipVisibility } from './types';
 import { Vue } from 'vue-property-decorator';
+import { IAdHocData } from './interfaces/ad-hoc-data';
+import { IEventPosition } from './interfaces/event-position';
 export default class VueSliderComponent extends Vue {
-    offset: number;
-    flag: boolean;
-    size: number;
-    currentValue: number;
-    isComponentExists: boolean;
-    width: cssSize;
-    height: cssSize;
+    adHocData: IAdHocData[];
     data: any[] | null;
     dotSize: number;
     dotWidth: number | null;
@@ -34,7 +13,7 @@ export default class VueSliderComponent extends Vue {
     interval: number;
     show: boolean;
     disabled: boolean;
-    piecewise: boolean;
+    showItems: boolean;
     tooltip: tooltipVisibility;
     eventType: eventType;
     reverse: boolean;
@@ -44,30 +23,36 @@ export default class VueSliderComponent extends Vue {
     realTime: boolean;
     stopPropagation: boolean;
     value: number;
-    piecewiseLabel: boolean;
+    showItemLabel: boolean;
     debug: boolean;
     sliderStyle: style | styleFunction | null;
-    tooltipDir: tooltipDir | null;
+    tooltipDir: tooltipDirection | null;
     formatter: string | formatterFunction;
-    piecewiseStyle: object;
+    itemStyle: object;
     progressBarStyle: object;
     bgStyle: object;
     tooltipStyle: style | styleFunction | null;
     labelStyle: object;
     labelActiveStyle: object;
-    private slider;
-    private sliderContainer;
+    private flag;
+    private size;
+    private currentValue;
+    private isComponentExists;
+    private width;
+    private height;
+    private thumb;
+    private track;
     private progressBar;
     constructor();
     readonly dotWidthVal: number;
     readonly dotHeightVal: number;
     readonly flowDirection: string;
-    readonly tooltipDirection: tooltipDir;
+    readonly tooltipDirection: tooltipDirection;
     readonly tooltipStatus: string;
     readonly tooltipClass: [string, string];
     readonly isDisabled: boolean;
     readonly disabledClass: string;
-    readonly sliderContainerStyle: CSSStyleDeclaration;
+    readonly trackContainerStyle: CSSStyleDeclaration;
     readonly sliderContainerHeight: number;
     readonly sliderContainerWidth: number;
     readonly minimum: number;
@@ -86,9 +71,9 @@ export default class VueSliderComponent extends Vue {
     readonly sliderStyles: style | null;
     readonly sliderOffsetStyle: style;
     readonly tooltipStyles: style | null;
-    readonly elemStyles: style;
-    readonly piecewiseDotStyle: style;
-    readonly piecewiseDotWrap: Array<{
+    readonly trackStyles: style;
+    readonly itemContainerStyle: style;
+    readonly itemDynamicStyling: Array<{
         currentStyle: style;
         label: string;
     }> | boolean;
@@ -100,7 +85,7 @@ export default class VueSliderComponent extends Vue {
     bindEvents(): void;
     unbindEvents(): void;
     formatting(value: any): string;
-    getPos(e: IEventPosition): number;
+    getItemPosition(e: IEventPosition): number;
     wrapClick(e: IEventPosition): boolean;
     onMoveStart(e: UIEvent, index: number): void;
     onMouseMove(event: MouseEvent): void;
@@ -118,7 +103,7 @@ export default class VueSliderComponent extends Vue {
     syncValue(noCallback?: boolean): void;
     getValue(): number;
     getIndex(): number;
-    getStaticData(): any;
+    updateTrackSize(): any;
     refresh(): void;
     printError(msg: string): void;
     mounted(): void;

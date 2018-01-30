@@ -21,8 +21,8 @@
   left: 0;
   z-index: 50;
 }
-.vue-slider-component.vue-slider-normal .vue-slider-piecewise-label,
-.vue-slider-component.vue-slider-normal .vue-slider-component.vue-slider-reverse .vue-slider-piecewise-label {
+.vue-slider-component.vue-slider-normal .vue-slider-item-label,
+.vue-slider-component.vue-slider-normal .vue-slider-component.vue-slider-reverse .vue-slider-item-label {
   position: absolute;
   display: inline-block;
   top: 100%;
@@ -39,13 +39,13 @@
 .vue-slider-component.vue-slider-reverse .vue-slider-dot {
   right: 0;
 }
-.vue-slider-component .vue-slider {
+.vue-slider-component .vue-slider-track {
   position: relative;
   display: block;
   border-radius: 15px;
   background-color: #ccc;
 }
-.vue-slider-component .vue-slider::after {
+.vue-slider-component .vue-slider-track::after {
   content: '';
   position: absolute;
   left: 0;
@@ -154,13 +154,13 @@
   border-right-color: inherit;
   transform: translate(0, -50%);
 }
-.vue-slider-component .vue-slider-piecewise-item {
+.vue-slider-component .vue-slider-item-container {
   position: absolute;
   width: 8px;
   height: 8px;
   z-index: 10;
 }
-.vue-slider-component .vue-slider-piecewise {
+.vue-slider-component .vue-slider-item {
   position: absolute;
   width: 100%;
   padding: 0;
@@ -170,7 +170,7 @@
   height: 100%;
   list-style: none;
 }
-.vue-slider-component .vue-slider-piecewise-dot {
+.vue-slider-component .vue-slider-item-dot {
   position: absolute;
   left: 50%;
   top: 50%;

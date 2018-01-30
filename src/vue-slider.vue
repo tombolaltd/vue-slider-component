@@ -15,6 +15,11 @@
           <slot name="item" :label="itemDynamicStyle.label" :index="index" :first="index === 0" :last="index === itemDynamicStyling.length - 1" :active="itemDynamicStyle.inRange">
             <span v-if="showItems" class="vue-slider-item-dot" :style="itemDynamicStyle.currentStyle"></span>
           </slot>
+          <!-- <slot name="adhoc" :label="itemDynamicStyle.label" :index="index" :first="index === 0" :last="index === itemDynamicStyling.length - 1" :active="itemDynamicStyle.inRange">
+            <span v-if="showItemLabel" class="vue-slider-item-label" :style="itemDynamicStyle.labelStyle">
+              {{ itemDynamicStyle.label }}
+            </span>
+          </slot> -->
           <slot name="label" :label="itemDynamicStyle.label" :index="index" :first="index === 0" :last="index === itemDynamicStyling.length - 1" :active="itemDynamicStyle.inRange">
             <span v-if="showItemLabel" class="vue-slider-item-label" :style="itemDynamicStyle.labelStyle">
               {{ itemDynamicStyle.label }}
@@ -27,31 +32,20 @@
   </div>
 </template>
 <script lang="ts">
-export type cssSize = number | string;
-export type eventType = 'auto' | 'none';
-export type formatterFunction = (val: number) => string;
-export type numberRange = [number, number];
-export type style = object | any[];
-export type styleFunction  = (val: number, index: number) => CSSStyleDeclaration;
-export type tooltipVisibility = 'hover'|'always'| boolean;
-export type tooltipDir = 'top'|'bottom'|'left'|'right';
-export type VueHTMLElement = Vue & HTMLElement;
+import {cssSize, eventType, formatterFunction, numberRange, style, styleFunction, tooltipDirection, tooltipVisibility } from './types';
 
-export interface IEventPosition {
-    readonly clientX: number;
-    readonly clientY: number;
-    readonly pageX: number;
-    readonly pageY: number;
-    readonly screenX: number;
-    readonly screenY: number;
-    readonly target: EventTarget;
-}
+type VueHTMLElement = Vue & HTMLElement;
 
 import { Component, Emit, Inject, Model, Prop, Provide, Vue, Watch } from 'vue-property-decorator';
 import { PatchedEventListener } from './event-listener-patch';
+import { IAdHocData } from './interfaces/ad-hoc-data';
+import { IEventPosition } from './interfaces/event-position';
 
   @Component({ })
   export default class VueSliderComponent extends Vue {
+
+    // @Prop({default: [] })
+    // public adHocData: IAdHocData[];
 
     @Prop({default: null})
     public data: any[] | null;
@@ -120,7 +114,7 @@ import { PatchedEventListener } from './event-listener-patch';
     public sliderStyle: style | styleFunction | null;
 
     @Prop({default: null})
-    public tooltipDir: tooltipDir | null;
+    public tooltipDir: tooltipDirection | null;
 
     @Prop()
     public formatter: string | formatterFunction;
@@ -181,7 +175,7 @@ import { PatchedEventListener } from './event-listener-patch';
         return `${ (this.reverse ? 'vue-slider-reverse' : 'vue-slider-normal')}`;
     }
 
-    public get tooltipDirection(): tooltipDir {
+    public get tooltipDirection(): tooltipDirection {
         return this.tooltipDir || 'top';
     }
 
