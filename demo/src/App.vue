@@ -1,8 +1,24 @@
 <template>
   <div id="app">
-    <div class="demo-container">
+    <div class="demo-container complex">
       <h2>Complex Styling</h2>
-      <vue-slider v-model="value" :height="16" min="1" max="90" :value="value" :progressBarStyle="progressBarStyle" :sliderStyle="sliderStyle" class="tombola-styled" >
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :value="value" :progressBarStyle="progressBarStyle" class="tombola-styled" :ad-hoc-data="adHocData" >
+      <template slot="tooltip">
+         <span class="vue-slider-tooltip">{{ value }} / 90</span>
+      </template>
+      <template slot="adHoc" scope="props">
+        <span class="additional-info">{{props.itemModel.adHocData.data.prize}}: {{ props.itemModel.adHocData.value }}
+          <span class="additional-info-text">
+              <div v-for="(winner, index) in props.itemModel.adHocData.data.winners" :index="index">{{ winner }}</div>
+              <!-- <div>{{ props.itemModel.adHocData.data.winners }}</div> -->
+          </span>
+        </span>
+      </template>
+    </vue-slider>
+    </div>
+    <div class="demo-container complex">
+      <h2>Reversed Complex Styling</h2>
+      <vue-slider v-model="value" :reverse="true" :height="16" :min="1" :max="90" :value="value" :progressBarStyle="progressBarStyle" :sliderStyle="sliderStyle" :ad-hoc-data="adHocData" >
       <template slot="tooltip">
          <span class="vue-slider-tooltip">{{ value }} / 90</span>
       </template>
@@ -10,27 +26,27 @@
     </div>
     <div class="demo-container">
       <h2>Basic</h2>
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" ></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" ></vue-slider>
     </div>
     <div class="demo-container">
       <h2>Reversed</h2>
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :reverse="true"></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :sliderStyle="sliderStyle" :reverse="true"></vue-slider>
     </div>
     <div class="demo-container">
       <h2>Tooltip on Hover</h2>
-      <vue-slider v-model="value" :height="16" min="1" max="90" :sliderStyle="sliderStyle" tooltip="hover" ></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :sliderStyle="sliderStyle" tooltip="hover" ></vue-slider>
     </div>
      <div class="demo-container">
-       <h2>Interval & initial value (Different value, Max/Min )</h2>
-      <vue-slider :value="5" :height="16" min="0" max="100" :sliderStyle="sliderStyle" :interval="5"></vue-slider>
+       <h2>Interval &amp; initial value (Different value, max &amp; min )</h2>
+      <vue-slider :value="5" :height="16" :min="0" :max="100" :sliderStyle="sliderStyle" :interval="5"></vue-slider>
     </div>
     <div class="demo-container">
       <h2>Disabled</h2>
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :disabled="true" ></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :sliderStyle="sliderStyle" :disabled="true" ></vue-slider>
     </div>
     <div class="demo-container">
        <h2>Not Clickable (Just Draggable)</h2>
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :clickable="false"></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :sliderStyle="sliderStyle" :clickable="false"></vue-slider>
     </div>
 
   <div>Current value= {{ value }}</div>
@@ -38,7 +54,8 @@
 </template>
 <script lang="ts">
 import { Component, Emit, Inject, Model, Prop, Provide, Vue, Watch } from 'vue-property-decorator';
-import {VueSliderComponent} from '../../src/index';
+import { VueSliderComponent } from '../../src/index';
+import { IAdHocData } from '../../src/interfaces/ad-hoc-data';
 
 @Component({
   components: {
@@ -53,6 +70,40 @@ export default class App  extends Vue {
   public progressBarStyle: object = {
       display: 'none'
   };
+
+  @Provide()
+  public adHocData: IAdHocData[] = [
+    {
+      value: 1,
+      data: {
+        prize: 'line',
+        winners: [
+          'MrEd Brand Glue',
+          'Arthur Pewty'
+        ]
+      }
+    },
+    {
+      value: 32,
+      data: {
+        prize: 'two line',
+        winners: [
+          'Radnor',
+          'Splash'
+        ]
+      }
+    },
+    {
+      value: 90,
+      data: {
+        prize: 'full house',
+        winners: [
+          'Jams',
+          'Fishpaste'
+        ]
+      }
+    }
+  ];
 
   @Provide()
   public sliderStyle: object = {
@@ -76,15 +127,18 @@ body {
 }
 
 .vue-slider-component.tombola-styled {
-     .vue-slider {
-      background-color: #CCCCCC;
-    }
-    .vue-slider-item-dot {
-      background-color: #FFFFFF;
+    .vue-slider-thumb {
+        background-color: #15A49C;
     }
     .vue-slider-tooltip {
       width: 60px;
-      box-shadow: 0.5px 0.5px 2px 1px rgba(0, 0, 0, 0.32)
+      color: #ccc;
+      border: 1px solid #FFFFFF;
+      background-color: #FFFFFF;
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    }
+    .vue-slider-ad-hoc-item {
+      width: 100px;
     }
 }
 
@@ -108,6 +162,34 @@ body {
   h2 {
     margin-bottom: 25px;
   }
+  &.complex {
+    .vue-slider-component {
+        margin-bottom: 40px;
+      }
+  }
+}
+
+.additional-info {
+    position: relative;
+    display: inline-block;
+    .additional-info-text {
+        visibility: hidden;
+        font-size: 14px;
+        width: 120px;
+        background-color: #CCCCCC;
+        color: #FFFFFF;
+        text-align: center;
+        top: 20px;
+        left: -20px;
+        padding: 4px 0;
+        border-radius: 4px;
+        position: absolute;
+        z-index: 1;
+    }
+    &:hover .additional-info-text {
+      visibility: visible;
+    }
+
 }
 
 </style>

@@ -1,4 +1,4 @@
 export interface IAdHocData {
-    itemIndex: number;
+    value: number;
     data: any;
 }

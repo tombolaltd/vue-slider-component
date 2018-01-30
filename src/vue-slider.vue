@@ -1,9 +1,9 @@
 <template>
-  <div ref="wrap" :class="['vue-slider-component', flowDirection, disabledClass, { 'vue-slider-has-label': showItemLabel }]" v-show="show" :style="wrapStyles" @click="wrapClick">
-    <div ref="track" aria-hidden="true" class="vue-slider-track" :style="[trackStyles, bgStyle]">
+  <div :class="['vue-slider-component', flowDirection, disabledClass, { 'vue-slider-has-label': showItemLabel }]" v-show="show" :style="rootContainerStyle" >
+    <div ref="track" aria-hidden="true" class="vue-slider-track" :style="[trackStyles, bgStyle]" @click="onTrackClick">
       <template>
-        <div ref="dot" :class="[tooltipStatus, 'vue-slider-dot']" :style="[sliderOffsetStyle, sliderStyles]" @mousedown="onMoveStart" @touchstart="onMoveStart" v-cloak>
-          <span :class="['vue-slider-tooltip-' + tooltipDirection, 'vue-slider-tooltip-wrap']">
+        <div ref="thumb" :class="[tooltipStatus, 'vue-slider-thumb']" :style="[thumbOffsetStyle, thumbStyle]" @mousedown="onMoveStart" @touchstart="onMoveStart" v-cloak>
+          <span :class="['vue-slider-tooltip-' + tooltipDirection, 'vue-slider-tooltip-container']">
             <slot name="tooltip" :value="val">
               <span class="vue-slider-tooltip" :style="tooltipStyles">{{ formatter ? formatting(val) : val }}</span>
             </slot>
@@ -11,18 +11,19 @@
         </div>
       </template>
       <ul class="vue-slider-item" v-cloak>
-        <li v-for="(itemDynamicStyle, index) in itemDynamicStyling" class="vue-slider-item-container" :style="[itemContainerStyle, itemDynamicStyle.style]" :key="index">
-          <slot name="item" :label="itemDynamicStyle.label" :index="index" :first="index === 0" :last="index === itemDynamicStyling.length - 1" :active="itemDynamicStyle.inRange">
-            <span v-if="showItems" class="vue-slider-item-dot" :style="itemDynamicStyle.currentStyle"></span>
+        <li v-for="(itemModel, index) in itemModels" class="vue-slider-item-container" :style="[itemContainerStyle, itemModel.style]" :key="index">
+          <slot name="item" :label="itemModel.label" :index="index" :first="index === 0" :last="index === itemModels.length - 1" :active="itemModel.inRange">
+            <span v-if="showItems" class="vue-slider-item-dot" :style="[itemModel.leftOffsetStyle]"></span>
           </slot>
-          <!-- <slot name="adhoc" :label="itemDynamicStyle.label" :index="index" :first="index === 0" :last="index === itemDynamicStyling.length - 1" :active="itemDynamicStyle.inRange">
-            <span v-if="showItemLabel" class="vue-slider-item-label" :style="itemDynamicStyle.labelStyle">
-              {{ itemDynamicStyle.label }}
+          <span :label="itemModel.label" :index="index" :first="index === 0" :last="index === itemModels.length - 1" :active="itemModel.inRange" v-if="showAdHoc">
+            <span v-if="itemModel.adHocData" class="vue-slider-ad-hoc-marker" :style="[itemModel.leftOffsetStyle, itemModel.adHocMarkerStyle]" @click="onAdHocClicked(itemModel.adHocData.value, $event)"></span>
+            <span v-if="itemModel.adHocData" class="vue-slider-ad-hoc-item" :style="[itemModel.leftOffsetStyle, itemModel.adHocVerticalOffsetStyle]" @click="onAdHocClicked(itemModel.adHocData.value, $event)">
+               <slot name="adHoc" :itemModel="itemModel" >{{ itemModel.value }}</slot>
             </span>
-          </slot> -->
-          <slot name="label" :label="itemDynamicStyle.label" :index="index" :first="index === 0" :last="index === itemDynamicStyling.length - 1" :active="itemDynamicStyle.inRange">
-            <span v-if="showItemLabel" class="vue-slider-item-label" :style="itemDynamicStyle.labelStyle">
-              {{ itemDynamicStyle.label }}
+          </span>
+          <slot name="label" :label="itemModel.label" :index="index" :first="index === 0" :last="index === itemModels.length - 1" :active="itemModel.inRange">
+            <span v-if="showItemLabel" class="vue-slider-item-label" :style="itemModel.labelStyle">
+              {{ itemModel.label }}
             </span>
           </slot>
         </li>
@@ -40,24 +41,25 @@ import { Component, Emit, Inject, Model, Prop, Provide, Vue, Watch } from 'vue-p
 import { PatchedEventListener } from './event-listener-patch';
 import { IAdHocData } from './interfaces/ad-hoc-data';
 import { IEventPosition } from './interfaces/event-position';
+import { IItemModel } from './interfaces/item-model';
 
   @Component({ })
   export default class VueSliderComponent extends Vue {
 
-    // @Prop({default: [] })
-    // public adHocData: IAdHocData[];
+    @Prop({default: () => [] })
+    public adHocData: IAdHocData[];
 
     @Prop({default: null})
     public data: any[] | null;
 
     @Prop({default: 16})
-    public dotSize: number;
+    public thumbSize: number;
 
     @Prop({default: null})
-    public dotWidth: number | null;
+    public thumbWidth: number | null;
 
     @Prop({default: null})
-    public dotHeight: number | null;
+    public thumbHeight: number | null;
 
     @Prop({default: 0})
     public min: number;
@@ -73,6 +75,9 @@ import { IEventPosition } from './interfaces/event-position';
 
     @Prop({default: false})
     public disabled: boolean;
+
+    @Prop({default: true})
+    public showAdHoc: boolean;
 
     @Prop({default: true})
     public showItems: boolean;
@@ -163,12 +168,12 @@ import { IEventPosition } from './interfaces/event-position';
         super();
     }
 
-    public get dotWidthVal(): number {
-        return typeof this.dotWidth === 'number' ? this.dotWidth : this.dotSize;
+    public get thumbWidthVal(): number {
+        return typeof this.thumbWidth === 'number' ? this.thumbWidth : this.thumbSize;
     }
 
-    public get dotHeightVal(): number {
-        return typeof this.dotHeight === 'number' ? this.dotHeight : this.dotSize;
+    public get thumbHeightVal(): number {
+        return typeof this.thumbHeight === 'number' ? this.thumbHeight : this.thumbSize;
     }
 
     public get flowDirection(): string {
@@ -254,6 +259,10 @@ import { IEventPosition } from './interfaces/event-position';
       return decimals ? Math.pow(10, decimals.length) : 1;
     }
 
+    public get showAdHocData(): boolean {
+      return this.showAdHoc;
+    }
+
     public get spacing(): number {
         return this.data ? 1 : this.interval;
     }
@@ -268,7 +277,7 @@ import { IEventPosition } from './interfaces/event-position';
     }
 
     public get gap(): number {
-        return (this.size - (this.dotSize || 0)) / this.total;
+        return (this.size - (this.thumbSize || 0)) / this.total;
     }
 
     public get position(): number {
@@ -283,14 +292,14 @@ import { IEventPosition } from './interfaces/event-position';
         return [this.minimum, this.maximum];
     }
 
-    public get wrapStyles(): style {
+    public get rootContainerStyle(): style {
         return {
           width: typeof this.width === 'number' ? `${this.width}px` : this.width,
-          padding: `${this.dotHeightVal / 2}px ${this.dotWidthVal / 2}px`
+          padding: `${this.thumbHeightVal / 2}px ${this.thumbWidthVal / 2}px`
         };
     }
 
-    public get sliderStyles(): style | null {
+    public get thumbStyle(): style | null {
         if (typeof this.sliderStyle === 'function') {
           return this.sliderStyle(this.val, this.currentIndex);
         } else {
@@ -298,14 +307,14 @@ import { IEventPosition } from './interfaces/event-position';
         }
     }
 
-    public get sliderOffsetStyle(): style {
+    public get thumbOffsetStyle(): style {
       if (this.reverse){
         return {
-          left: `${this.size - (this.dotSize * 1.5)}px`
+          left: `${this.size - (this.thumbSize * 1.5)}px`
         };
       }
       return {
-        left: `${this.dotSize / 2}px`
+        left: `${this.thumbSize / 2}px`
       };
     }
 
@@ -332,23 +341,48 @@ import { IEventPosition } from './interfaces/event-position';
         };
     }
 
-    public get itemDynamicStyling(): Array<{currentStyle: style, label: string}> | boolean {
+    // TODO: this should be private..
+    public convertIndexToValue(index: number): number {
+      const value  = (index * this.interval) + this.minimum;
+      return (index * this.interval) + this.minimum;
+    }
+
+    public get itemModels(): IItemModel[] | boolean {
         if (!(this.showItems || this.showItemLabel)) {
           return false;
         }
 
         const arr = [];
+        const adHocVerticalOffsetStyle: style = {
+          top: `${ this.thumbSize * 1.5 }px`
+        };
+
+        const adHocMarkerStyle: style = {
+          top: `-${this.thumbSize / 2}px`,
+          height: `${this.thumbSize * 2}px`
+        };
+
         for (let i = 0; i <= this.total; i++) {
-          const position =  (this.gap * i) + 8;
-          const currentStyle: style = {
+          const position =  (this.gap * i) + (this.thumbSize / 2);
+          const leftOffsetStyle: style = {
               left: `${[position]}px`
           };
 
           const index = this.reverse ? (this.total - i) : i;
+          const value =  this.convertIndexToValue(index);
+          const adHocData = this.adHocData ? this.adHocData.find((x: IAdHocData) =>  x.value === value) || null : null;
+          const item = this.data ? this.data[index] : null;
+
           const label = this.data ? this.data[index] : (this.spacing * index) + this.min;
           arr.push({
-            currentStyle,
-            label: this.formatter ? this.formatting(label) : label,
+            adHocData,
+            adHocMarkerStyle,
+            adHocVerticalOffsetStyle,
+            index,
+            leftOffsetStyle,
+            value,
+            item,
+            label: this.formatter ? this.formatting(label) : label
           });
         }
 
@@ -392,9 +426,9 @@ import { IEventPosition } from './interfaces/event-position';
     }
 
     public updateSliderStyle(): void {
-      this.thumb.style.width = `${this.dotWidthVal}px`;
-      this.thumb.style.height = `${this.dotHeightVal}px`;
-      // this.thumb.style.left =  `${(-(this.dotWidthVal / 4))}px`;  /*`${(-(this.dotWidthVal - this.sliderContainerWidth) / 2)}px`;*/
+      this.thumb.style.width = `${this.thumbWidthVal}px`;
+      this.thumb.style.height = `${this.thumbHeightVal}px`;
+      // this.thumb.style.left =  `${(-(this.thumbWidthVal / 4))}px`;  /*`${(-(this.thumbWidthVal - this.sliderContainerWidth) / 2)}px`;*/
     }
 
     public bindEvents(): void {
@@ -430,7 +464,7 @@ import { IEventPosition } from './interfaces/event-position';
       return this.reverse ? (this.size - (e.clientX - this.thumb.clientWidth)) : (e.clientX - (2 * this.thumb.clientWidth));
     }
 
-    public wrapClick (e: IEventPosition): boolean {
+    public onTrackClick (e: IEventPosition): boolean {
       if (this.isDisabled || !this.clickable) {
         return false;
       }
@@ -503,13 +537,13 @@ import { IEventPosition } from './interfaces/event-position';
       if (pos >= range[0] && pos <= range[1]) {
         this.setTransform(pos);
         const v = (Math.round(pos / this.gap) * (this.spacing * this.multiple) + (this.minimum * this.multiple)) / this.multiple;
-        this.setCurrentValue(v, isDrag);
+        this.setIndex(v, isDrag);
       } else if (pos < range[0]) {
         this.setTransform(range[0]);
-        this.setCurrentValue(valueRange[0]);
+        this.setIndex(valueRange[0]);
       } else {
         this.setTransform(range[1]);
-        this.setCurrentValue(valueRange[1]);
+        this.setIndex(valueRange[1]);
       }
     }
 
@@ -522,9 +556,9 @@ import { IEventPosition } from './interfaces/event-position';
       return a !== b;
     }
 
-    public setCurrentValue (val: number, skipPositionSet?: boolean): boolean {
+    public setIndex (val: number, skipPositionSet?: boolean): void{
       if (val < this.minimum || val > this.maximum) {
-        return false;
+        return;
       }
       if (this.isDiff(this.currentValue, val)) {
         this.currentValue = val;
@@ -533,12 +567,15 @@ import { IEventPosition } from './interfaces/event-position';
         }
       }
       skipPositionSet || this.setPosition();
-      return true;
+      return;
     }
 
-    public setIndex (val: number): void {
-        val = this.spacing * val + this.minimum;
-        this.setCurrentValue(val);
+    public onAdHocClicked(val: number, $event: Event): void {
+      if (!this.clickable) {
+        return;
+      }
+      $event.stopPropagation();
+      this.setIndex(val);
     }
 
     public setValue (val: number, noCallback?: any, speed?: number): void {
@@ -557,7 +594,7 @@ import { IEventPosition } from './interfaces/event-position';
     }
 
     public setTransform (position: number): void {
-      const value = (position - (this.dotWidthVal / 2)) * (this.reverse ? -1 : 1);
+      const value = (position - (this.thumbWidthVal / 2)) * (this.reverse ? -1 : 1);
       const translateValue =  `translateX(${value}px)`;
       const progressSize = `${this.position - position}px`;
       const progressPos = `${position}px`;
@@ -565,7 +602,7 @@ import { IEventPosition } from './interfaces/event-position';
       this.thumb.style.transform = translateValue;
       this.thumb.style.webkitTransform = translateValue;
       // this.trackContainerStyle.msTransform = translateValue;
-      this.progressBar.style.width = `${position + this.dotSize}px`;
+      this.progressBar.style.width = `${position + this.thumbSize}px`;
       this.progressBar.style[this.reverse ? 'right' : 'left'] = '0';
     }
 
@@ -633,7 +670,7 @@ import { IEventPosition } from './interfaces/event-position';
 
     public mounted(): void {
       this.track = this.$refs.track as VueHTMLElement;
-      this.thumb = this.$refs.dot as VueHTMLElement;
+      this.thumb = this.$refs.thumb as VueHTMLElement;
       this.progressBar = this.$refs.progress as VueHTMLElement;
       this.isComponentExists = true;
 
@@ -660,6 +697,16 @@ import { IEventPosition } from './interfaces/event-position';
 
 <style lang="less">
   //TODO: lessify
+  @tooltip-color: #3498db;
+  @slider-track-color: #CCCCCC;
+  @dot-color: #FFFFFF;
+
+  @border-radius: 5px;
+  @fly-out-font-size: 14px;
+  @track-border-radius: 15px;
+  @ad-hoc-marker-height: 5px;
+  @dot-width: 25%;
+
   .vue-slider-component {
     position: relative;
     box-sizing: border-box;
@@ -667,7 +714,7 @@ import { IEventPosition } from './interfaces/event-position';
     &.vue-slider-disabled {
       opacity: .5;
       cursor: not-allowed;
-       .vue-slider-dot {
+       .vue-slider-thumb {
           cursor: not-allowed;
        }
     }
@@ -678,7 +725,7 @@ import { IEventPosition } from './interfaces/event-position';
       .vue-slider-progress {
         left: 0;
       }
-      .vue-slider-dot {
+      .vue-slider-thumb {
         left: 0;
         z-index: 50;
       }
@@ -698,15 +745,16 @@ import { IEventPosition } from './interfaces/event-position';
       .vue-slider-progress {
         right: 0;  
       }
-      .vue-slider-dot {
+      .vue-slider-thumb {
         right: 0;
+        z-index: 50;
       }
     }
     .vue-slider-track {
       position: relative;
       display: block;
-      border-radius: 15px;
-      background-color: #ccc;
+      border-radius: @track-border-radius;
+      background-color: @slider-track-color;
       &::after {
         content: '';
         position: absolute;
@@ -719,8 +767,8 @@ import { IEventPosition } from './interfaces/event-position';
     }
     .vue-slider-progress {
       position: absolute;
-      border-radius: 15px;
-      background-color: #3498db;
+      border-radius: @track-border-radius;
+      background-color: @tooltip-color;
       transition: all 0s;
       z-index: 1;
       width: 0;
@@ -728,7 +776,7 @@ import { IEventPosition } from './interfaces/event-position';
       top: 0;
       will-change: width;
     }
-    .vue-slider-dot {
+    .vue-slider-thumb {
       position: absolute;
       border-radius: 50%;
       background-color: #fff;
@@ -737,14 +785,14 @@ import { IEventPosition } from './interfaces/event-position';
       will-change: transform;
       cursor: pointer;
       z-index: 3;
-      &.vue-slider-hover:hover .vue-slider-tooltip-wrap {
+      &.vue-slider-hover:hover .vue-slider-tooltip-container {
         display: block;
       }
-      &.vue-slider-always .vue-slider-tooltip-wrap {
+      &.vue-slider-always .vue-slider-tooltip-container {
         display: block!important;
       }
     }
-    .vue-slider-tooltip-wrap {
+    .vue-slider-tooltip-container {
       display: none;
       position: absolute;
       z-index: 9;
@@ -838,26 +886,49 @@ import { IEventPosition } from './interfaces/event-position';
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 25%;
-      height: 25%;
+      width: @dot-width;
+      height: @dot-width;
       display: inline-block;
-      background-color: rgba(0, 0, 0, 0.16);
+      background-color: @dot-color;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-        z-index: 2;
+      z-index: 2;
+      transition: all .3s;
+    }
+    .vue-slider-ad-hoc-item {
+      position: absolute;
+      font-size: @fly-out-font-size;
+      display: inline-block;
+      background-color: @slider-track-color;
+      border-radius: @border-radius;
+      padding: 0 7px;
+      transform: translate(-50%, 0px);
+      z-index: -10;
+      transition: all .3s;
+      color: @dot-color;
+      text-align: center;
+    }
+    .vue-slider-ad-hoc-marker {
+      position: absolute;
+      width: @dot-width;
+      display: inline-block;
+      background-color: @slider-track-color;
+      padding: 0;
+      transform: translate(-50%, 0px);
+      z-index: -20;
       transition: all .3s;
     }
     .vue-slider-tooltip {
       display: block;
-      font-size: 14px;
+      font-size: @fly-out-font-size;
       white-space: nowrap;
       padding: 2px 5px;
       min-width: 20px;
       text-align: center;
       color: #fff;
-      border-radius: 5px;
-      border: 1px solid #3498db;
-      background-color: #3498db;
+      border-radius: @border-radius;
+      border: 1px solid @tooltip-color;
+      background-color: @tooltip-color;
     }
     .vue-slider-sr-only {
         clip: rect(1px, 1px, 1px, 1px);
