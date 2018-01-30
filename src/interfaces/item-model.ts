@@ -1,13 +1,13 @@
-import { style } from '../types';
 import { IAdHocData } from './ad-hoc-data';
 
 export interface IItemModel {
     adHocData?: IAdHocData | null;
-    leftOffsetStyle: style;
-    adHocVerticalOffsetStyle?: style | null;
-    adHocMarkerStyle?: style | null;
+    adHocMarkerStyle?: CSSStyleDeclaration | null;
+    adHocVerticalOffsetStyle?: CSSStyleDeclaration | null;
     index: number;
-    value: number;
     item: any;
     label: string;
+    labelStyle?: CSSStyleDeclaration | null;
+    leftOffsetStyle: CSSStyleDeclaration;
+    value: number;
 }

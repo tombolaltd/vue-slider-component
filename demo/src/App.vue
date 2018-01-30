@@ -18,7 +18,7 @@
     </div>
     <div class="demo-container complex">
       <h2>Reversed Complex Styling</h2>
-      <vue-slider v-model="value" :reverse="true" :height="16" :min="1" :max="90" :value="value" :progressBarStyle="progressBarStyle" :sliderStyle="sliderStyle" :ad-hoc-data="adHocData" >
+      <vue-slider v-model="value" :reverse="true" :height="16" :min="1" :max="90" :value="value" :progressBarStyle="progressBarStyle" :thumbStyle="thumbStyle" :ad-hoc-data="adHocData" >
       <template slot="tooltip">
          <span class="vue-slider-tooltip">{{ value }} / 90</span>
       </template>
@@ -30,23 +30,43 @@
     </div>
     <div class="demo-container">
       <h2>Reversed</h2>
-      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :sliderStyle="sliderStyle" :reverse="true"></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :thumbStyle="thumbStyle" :reverse="true"></vue-slider>
     </div>
     <div class="demo-container">
       <h2>Tooltip on Hover</h2>
-      <vue-slider v-model="value" :height="16" :min="1" :max="90" :sliderStyle="sliderStyle" tooltip="hover" ></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :thumbStyle="thumbStyle" tooltip="hover"></vue-slider>
     </div>
      <div class="demo-container">
        <h2>Interval &amp; initial value (Different value, max &amp; min )</h2>
-      <vue-slider :value="5" :height="16" :min="0" :max="100" :sliderStyle="sliderStyle" :interval="5"></vue-slider>
+      <vue-slider :value="5" :height="16" :min="0" :max="100" :thumbStyle="thumbStyle" :interval="5"></vue-slider>
     </div>
     <div class="demo-container">
       <h2>Disabled</h2>
-      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :sliderStyle="sliderStyle" :disabled="true" ></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :thumbStyle="thumbStyle" :disabled="true" ></vue-slider>
     </div>
     <div class="demo-container">
        <h2>Not Clickable (Just Draggable)</h2>
-      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :sliderStyle="sliderStyle" :clickable="false"></vue-slider>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :thumbStyle="thumbStyle" :clickable="false"></vue-slider>
+    </div>
+    <div class="demo-container">
+       <h2>Dot Style</h2>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :dotStyle="thumbStyle"></vue-slider>
+    </div>
+    <div class="demo-container">
+       <h2>Track Style</h2>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :trackStyle="thumbStyle"></vue-slider>
+    </div>
+    <div class="demo-container">
+       <h2>Tooltip Style</h2>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :tooltipStyle="tooltipStyle"></vue-slider>
+    </div>
+    <div class="demo-container">
+       <h2>Progress Bar Style</h2>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :progressBarStyle="tooltipStyle"></vue-slider>
+    </div>
+    <div class="demo-container">
+       <h2>Container Style</h2>
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :current-value="value" :containerStyle="tooltipStyle"></vue-slider>
     </div>
 
   <div>Current value= {{ value }}</div>
@@ -106,8 +126,15 @@ export default class App  extends Vue {
   ];
 
   @Provide()
-  public sliderStyle: object = {
+  public thumbStyle: object = {
     'background-color': '#008080A0',
+    'box-shadow': 'none'
+  };
+
+  @Provide()
+  public tooltipStyle: object = {
+    'background-color': '#008080',
+    'border-color': '#008080',
     'box-shadow': 'none'
   };
 

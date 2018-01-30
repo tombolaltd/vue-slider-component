@@ -1,11 +1,11 @@
 <template>
-  <div :class="['vue-slider-component', flowDirection, disabledClass, { 'vue-slider-has-label': showItemLabel }]" v-show="show" :style="rootContainerStyle" >
-    <div ref="track" aria-hidden="true" class="vue-slider-track" :style="[trackStyles, bgStyle]" @click="onTrackClick">
+  <div :class="['vue-slider-component', flowDirection, disabledClass, { 'vue-slider-has-label': showItemLabel }]" v-show="show" :style="getContainerStyle" >
+    <div ref="track" aria-hidden="true" class="vue-slider-track" :style="getTrackStyle" @click="onTrackClick">
       <template>
-        <div ref="thumb" :class="[tooltipStatus, 'vue-slider-thumb']" :style="[thumbOffsetStyle, thumbStyle]" @mousedown="onMoveStart" @touchstart="onMoveStart" v-cloak>
+        <div ref="thumb" :class="[tooltipStatusClass, 'vue-slider-thumb']" :style="[thumbOffsetStyle, getThumbStyle]" @mousedown="onMoveStart" @touchstart="onMoveStart" v-cloak>
           <span :class="['vue-slider-tooltip-' + tooltipDirection, 'vue-slider-tooltip-container']">
             <slot name="tooltip" :value="val">
-              <span class="vue-slider-tooltip" :style="tooltipStyles">{{ formatter ? formatting(val) : val }}</span>
+              <span class="vue-slider-tooltip" :style="[getTooltipStyle]">{{ formatter ? formatting(val) : val }}</span>
             </slot>
           </span>
         </div>
@@ -13,7 +13,7 @@
       <ul class="vue-slider-item" v-cloak>
         <li v-for="(itemModel, index) in itemModels" class="vue-slider-item-container" :style="[itemContainerStyle, itemModel.style]" :key="index">
           <slot name="item" :label="itemModel.label" :index="index" :first="index === 0" :last="index === itemModels.length - 1" :active="itemModel.inRange">
-            <span v-if="showItems" class="vue-slider-item-dot" :style="[itemModel.leftOffsetStyle]"></span>
+            <span v-if="showDots" class="vue-slider-item-dot" :style="[itemModel.leftOffsetStyle, getDotStyle]"></span>
           </slot>
           <span :label="itemModel.label" :index="index" :first="index === 0" :last="index === itemModels.length - 1" :active="itemModel.inRange" v-if="showAdHoc">
             <span v-if="itemModel.adHocData" class="vue-slider-ad-hoc-marker" :style="[itemModel.leftOffsetStyle, itemModel.adHocMarkerStyle]" @click="onAdHocClicked(itemModel.adHocData.value, $event)"></span>
@@ -28,12 +28,12 @@
           </slot>
         </li>
       </ul>
-      <div ref="progress" class="vue-slider-progress" :style="progressBarStyle"></div>
+      <div ref="progress" class="vue-slider-progress" :style="getProgressBarStyle"></div>
     </div>
   </div>
 </template>
 <script lang="ts">
-import {cssSize, eventType, formatterFunction, numberRange, style, styleFunction, tooltipDirection, tooltipVisibility } from './types';
+import {cssSize, cssStyleDeclarationFunction, cssStyleDefinition, eventType, formatterFunction, numberRange, tooltipDirection, tooltipVisibility } from './types';
 
 type VueHTMLElement = Vue & HTMLElement;
 
@@ -50,16 +50,40 @@ import { IItemModel } from './interfaces/item-model';
     public adHocData: IAdHocData[];
 
     @Prop({default: null})
+    public containerStyle: cssStyleDefinition;
+
+    @Prop({default: true})
+    public clickable: boolean;
+
+    @Prop({default: null})
     public data: any[] | null;
 
-    @Prop({default: 16})
-    public thumbSize: number;
+    @Prop({default: process && process.env && process.env.NODE_ENV !== 'production'})
+    public debug: boolean;
 
-    @Prop({default: null})
-    public thumbWidth: number | null;
+    @Prop({default: false})
+    public disabled: boolean;
 
-    @Prop({default: null})
-    public thumbHeight: number | null;
+    @Prop()
+    public dotStyle: cssStyleDefinition;
+
+    @Prop({default: 'auto'})
+    public eventType: eventType;
+
+    @Prop()
+    public formatter: string | formatterFunction;
+
+    @Prop({default: 6})
+    public height: cssSize;
+
+    @Prop({default: 1})
+    public interval: number;
+
+    @Prop()
+    public labelStyle: cssStyleDefinition;
+
+    @Prop({default: false})
+    public lazy: boolean;
 
     @Prop({default: 0})
     public min: number;
@@ -67,98 +91,74 @@ import { IItemModel } from './interfaces/item-model';
     @Prop({default: 100})
     public max: number;
 
-    @Prop({default: 1})
-    public interval: number;
-
-    @Prop({default: true})
-    public show: boolean;
-
-    @Prop({default: false})
-    public disabled: boolean;
-
-    @Prop({default: true})
-    public showAdHoc: boolean;
-
-    @Prop({default: true})
-    public showItems: boolean;
-
-    @Prop({default: 'always'})
-    public tooltip: tooltipVisibility;
-
-    @Prop({default: 'auto'})
-    public eventType: eventType;
-
-    @Prop({default: false})
-    public reverse: boolean;
-
-    @Prop({default: false})
-    public lazy: boolean;
-
-    @Prop({default: true})
-    public clickable: boolean;
-
-    @Prop({default: 0.5})
-    public speed: number;
+    @Prop()
+    public progressBarStyle: cssStyleDefinition;
 
     @Prop({default: false})
     public realTime: boolean;
 
     @Prop({default: false})
-    public stopPropagation: boolean;
+    public reverse: boolean;
 
-    @Prop({default: 0})
-    public value: number;
+    @Prop({default: true})
+    public showAdHoc: boolean;
+
+    @Prop({default: true})
+    public show: boolean;
+
+    @Prop({default: true})
+    public showDots: boolean;
 
     @Prop({default: false})
     public showItemLabel: boolean;
 
-    @Prop({default: process && process.env && process.env.NODE_ENV !== 'production'})
-    public debug: boolean;
+    @Prop({default: 0.5})
+    public speed: number;
+
+    @Prop({default: false})
+    public stopPropagation: boolean;
 
     @Prop({default: null})
-    public sliderStyle: style | styleFunction | null;
+    public thumbHeight: number | null;
+
+    @Prop({default: 16})
+    public thumbSize: number;
+
+    @Prop({default: null})
+    public thumbStyle: cssStyleDefinition;
+
+    @Prop({default: null})
+    public thumbWidth: number | null;
+
+    @Prop({default: 'always'})
+    public tooltip: tooltipVisibility;
 
     @Prop({default: null})
     public tooltipDir: tooltipDirection | null;
 
-    @Prop()
-    public formatter: string | formatterFunction;
-
-    @Prop()
-    public itemStyle: object;
-
-    @Prop()
-    public progressBarStyle: object;
-
-    @Prop()
-    public bgStyle: object;
-
     @Prop({default: null})
-    public tooltipStyle: style | styleFunction | null;
+    public tooltipStyle: cssStyleDefinition;
 
     @Prop()
-    public labelStyle: object;
+    public trackStyle: cssStyleDefinition;
 
-    @Prop()
-    public labelActiveStyle: object;
+    @Prop({default: 0})
+    public value: number;
 
-    @Provide()
-    private flag: boolean = false;
-
-    @Provide()
-    private size: number = 0;
+    @Prop({default: 'auto'})
+    public width: cssSize;
 
     @Provide()
     private currentValue: number  = 0;
 
     @Provide()
+    private flag: boolean = false;
+
+    @Provide()
     private isComponentExists: boolean = true;
 
-    @Prop({default: 'auto'})
-    private width: cssSize;
-
-    @Prop({default: 6})
-    private height: cssSize;
+    @Provide()
+    private size: number = 0;
 
     private thumb: VueHTMLElement;
     private track: VueHTMLElement;
@@ -168,46 +168,42 @@ import { IItemModel } from './interfaces/item-model';
         super();
     }
 
-    public get thumbWidthVal(): number {
-        return typeof this.thumbWidth === 'number' ? this.thumbWidth : this.thumbSize;
+    public get currentIndex(): number {
+        return (this.currentValue - this.minimum) / this.getInterval;
     }
 
-    public get thumbHeightVal(): number {
-        return typeof this.thumbHeight === 'number' ? this.thumbHeight : this.thumbSize;
+    public get getInterval(): number {
+        return this.data ? 1 : this.interval;
     }
 
-    public get flowDirection(): string {
-        return `${ (this.reverse ? 'vue-slider-reverse' : 'vue-slider-normal')}`;
-    }
-
-    public get tooltipDirection(): tooltipDirection {
-        return this.tooltipDir || 'top';
-    }
-
-    public get tooltipStatus(): string {
-        return this.tooltip === 'hover' && this.flag ? 'vue-slider-always' : this.tooltip ? `vue-slider-${this.tooltip}` : '';
-    }
-
-    public get tooltipClass(): [string, string] {
-        return [`vue-slider-tooltip-${this.tooltipDirection}`, 'vue-slider-tooltip'];
+    public get gapWidth(): number {
+        return (this.size - (this.thumbSize || 0)) / this.total;
     }
 
     public get isDisabled(): boolean {
         return this.eventType === 'none' ? true : this.disabled;
     }
 
-    public get disabledClass(): string {
-        return this.disabled ? 'vue-slider-disabled' : '';
+    public get limit(): numberRange {
+        return [0, this.size];
     }
 
-    public get trackContainerStyle(): CSSStyleDeclaration {
-      return this.track.style;
+    public get minimum(): number {
+        return this.data ? 0 : this.min;
+    }
+
+    public get maximum (): number {
+      return this.data ? (this.data.length - 1) : this.max;
+    }
+
+    public get position(): number {
+        return ((this.currentValue - this.minimum) / this.getInterval * this.gapWidth);
     }
 
     public get sliderContainerHeight(): number {
       if (!this.track)
       {
-        return 6;
+        return 0;
       }
       return this.track.clientHeight;
     }
@@ -220,8 +216,21 @@ import { IItemModel } from './interfaces/item-model';
       return this.track.clientWidth;
     }
 
-    public get minimum(): number {
-        return this.data ? 0 : this.min;
+    public get thumbWidthVal(): number {
+        return typeof this.thumbWidth === 'number' ? this.thumbWidth : this.thumbSize;
+    }
+
+    public get thumbHeightVal(): number {
+        return typeof this.thumbHeight === 'number' ? this.thumbHeight : this.thumbSize;
+    }
+
+    public get total(): number {
+      if (this.data) {
+        return this.data.length - 1;
+      } else if (Math.floor((this.maximum - this.minimum) * this.multiple) % (this.interval * this.multiple) !== 0) {
+        this.printError('[VueSlider error]: Prop[interval] is illegal, Please make sure that the interval can be divisible');
+      }
+      return (this.maximum - this.minimum) / this.interval;
     }
 
     public get val(): number {
@@ -242,143 +251,84 @@ import { IItemModel } from './interfaces/item-model';
         }
     }
 
-    public get currentIndex(): number {
-        return (this.currentValue - this.minimum) / this.spacing;
-    }
-
-    public get indexRange(): numberRange {
-        return [0, this.currentIndex];
-    }
-
-    public get maximum (): number {
-      return this.data ? (this.data.length - 1) : this.max;
-    }
-
-    public get multiple(): number {
-      const decimals = `${this.interval}`.split('.')[1];
-      return decimals ? Math.pow(10, decimals.length) : 1;
-    }
-
-    public get showAdHocData(): boolean {
-      return this.showAdHoc;
-    }
-
-    public get spacing(): number {
-        return this.data ? 1 : this.interval;
-    }
-
-    public get total(): number {
-      if (this.data) {
-        return this.data.length - 1;
-      } else if (Math.floor((this.maximum - this.minimum) * this.multiple) % (this.interval * this.multiple) !== 0) {
-        this.printError('[VueSlider error]: Prop[interval] is illegal, Please make sure that the interval can be divisible');
-      }
-      return (this.maximum - this.minimum) / this.interval;
-    }
-
-    public get gap(): number {
-        return (this.size - (this.thumbSize || 0)) / this.total;
-    }
-
-    public get position(): number {
-        return ((this.currentValue - this.minimum) / this.spacing * this.gap);
-    }
-
-    public get limit(): numberRange {
-        return [0, this.size];
-    }
-
     public get valueLimit(): numberRange {
         return [this.minimum, this.maximum];
     }
 
-    public get rootContainerStyle(): style {
-        return {
-          width: typeof this.width === 'number' ? `${this.width}px` : this.width,
-          padding: `${this.thumbHeightVal / 2}px ${this.thumbWidthVal / 2}px`
-        };
+    private get disabledClass(): string {
+        return this.disabled ? 'vue-slider-disabled' : '';
     }
 
-    public get thumbStyle(): style | null {
-        if (typeof this.sliderStyle === 'function') {
-          return this.sliderStyle(this.val, this.currentIndex);
-        } else {
-          return this.sliderStyle;
-        }
+    private get flowDirection(): string {
+        return `${ (this.reverse ? 'vue-slider-reverse' : 'vue-slider-normal')}`;
     }
 
-    public get thumbOffsetStyle(): style {
-      if (this.reverse){
-        return {
-          left: `${this.size - (this.thumbSize * 1.5)}px`
-        };
-      }
-      return {
-        left: `${this.thumbSize / 2}px`
-      };
+    private get getContainerStyle(): Array<CSSStyleDeclaration | null> {
+      const rootContainerStyle = {} as CSSStyleDeclaration;
+      rootContainerStyle.width = typeof this.width === 'number' ? `${this.width}px` : this.width,
+      rootContainerStyle.padding = `${this.thumbHeightVal / 2}px ${this.thumbWidthVal / 2}px`;
+      return [rootContainerStyle, this.unpackStyle(this.containerStyle)];
     }
 
-    public get tooltipStyles(): style | null {
-        if (typeof this.tooltipStyle === 'function') {
-          return this.tooltipStyle(this.val, this.currentIndex);
-        }
-        else {
-          return this.tooltipStyle;
-        }
+    private get getDotStyle(): CSSStyleDeclaration | null {
+      return this.unpackStyle(this.dotStyle);
     }
 
-    public get trackStyles(): style {
-      const baseStyle: style = {
-        height: `${this.height}px`
-      };
-      return baseStyle;
+    private get getProgressBarStyle(): CSSStyleDeclaration | null {
+      return this.unpackStyle(this.progressBarStyle);
     }
 
-    public get itemContainerStyle(): style {
-        return {
-          width: `${this.height}px`,
-          height: `${this.height}px`
-        };
+    private get getThumbStyle(): CSSStyleDeclaration | null {
+      return this.unpackStyle(this.thumbStyle);
     }
 
-    // TODO: this should be private..
-    public convertIndexToValue(index: number): number {
-      const value  = (index * this.interval) + this.minimum;
-      return (index * this.interval) + this.minimum;
+    private get getTooltipStyle(): CSSStyleDeclaration | null {
+        return this.unpackStyle(this.tooltipStyle);
     }
 
-    public get itemModels(): IItemModel[] | boolean {
-        if (!(this.showItems || this.showItemLabel)) {
+    private get getTrackStyle(): Array<CSSStyleDeclaration | null> {
+      const trackStyle = {} as CSSStyleDeclaration;
+      trackStyle.height = `${this.height}px`;
+      return [ trackStyle,  this.unpackStyle(this.trackStyle)];
+    }
+
+    private get itemContainerStyle(): CSSStyleDeclaration {
+      const itemContainerStyle = {} as CSSStyleDeclaration;
+      itemContainerStyle.width = `${this.height}px`;
+      itemContainerStyle.height = `${this.height}px`;
+      return itemContainerStyle;
+    }
+
+    private get itemModels(): IItemModel[] | boolean {
+        if (!(this.showDots || this.showItemLabel)) {
           return false;
         }
 
         const arr = [];
-        const adHocVerticalOffsetStyle: style = {
-          top: `${ this.thumbSize * 1.5 }px`
-        };
+        const adHocVerticalOffsetStyle =  {} as CSSStyleDeclaration;
+        adHocVerticalOffsetStyle.top =  `${ this.thumbSize * 1.5 }px`;
 
-        const adHocMarkerStyle: style = {
-          top: `-${this.thumbSize / 2}px`,
-          height: `${this.thumbSize * 2}px`
-        };
+        const adHocMarkerStyle =  {} as CSSStyleDeclaration;
+        adHocMarkerStyle.top = `-${this.thumbSize / 2}px`;
+        adHocMarkerStyle.height = `${this.thumbSize * 2}px`;
 
         for (let i = 0; i <= this.total; i++) {
-          const position =  (this.gap * i) + (this.thumbSize / 2);
-          const leftOffsetStyle: style = {
-              left: `${[position]}px`
-          };
+          const position =  (this.gapWidth * i) + (this.thumbSize / 2);
+          const leftOffsetStyle = {} as CSSStyleDeclaration;
+          leftOffsetStyle.left = `${[position]}px`;
 
           const index = this.reverse ? (this.total - i) : i;
           const value =  this.convertIndexToValue(index);
           const adHocData = this.adHocData ? this.adHocData.find((x: IAdHocData) =>  x.value === value) || null : null;
           const item = this.data ? this.data[index] : null;
 
-          const label = this.data ? this.data[index] : (this.spacing * index) + this.min;
+          const label = this.data ? this.data[index] : (this.getInterval * index) + this.min;
           arr.push({
             adHocData,
             adHocMarkerStyle,
             adHocVerticalOffsetStyle,
             index,
+            labelStyle: this.unpackStyle(this.labelStyle),
             leftOffsetStyle,
             value,
             item,
@@ -389,9 +339,40 @@ import { IItemModel } from './interfaces/item-model';
         return arr;
     }
 
-    @Watch('value', { immediate: true, deep: true })
-    public onValueChanged(val: number): void {
-        this.flag || this.setValue(val, true);
+    private get multiple(): number {
+      const decimals = `${this.interval}`.split('.')[1];
+      return decimals ? Math.pow(10, decimals.length) : 1;
+    }
+
+    private get showAdHocData(): boolean {
+      return this.showAdHoc;
+    }
+
+    private get thumbOffsetStyle(): CSSStyleDeclaration {
+      const thumbOffsetStyle = {} as CSSStyleDeclaration;
+      if (this.reverse){
+          thumbOffsetStyle.left = `${this.size - (this.thumbSize * 1.5)}px`;
+      }
+      else {
+        thumbOffsetStyle.left = `${this.thumbSize / 2}px`;
+      }
+      return thumbOffsetStyle;
+    }
+
+    private get tooltipClass(): [string, string] {
+        return [`vue-slider-tooltip-${this.tooltipDirection}`, 'vue-slider-tooltip'];
+    }
+
+    private get tooltipDirection(): tooltipDirection {
+        return this.tooltipDir || 'top';
+    }
+
+    private get tooltipStatusClass(): string {
+        return this.tooltip === 'hover' && this.flag ? 'vue-slider-always' : this.tooltip ? `vue-slider-${this.tooltip}` : '';
+    }
+
+    private get trackContainerStyle(): CSSStyleDeclaration {
+      return this.track.style;
     }
 
     @Watch('max', { immediate: true, deep: true })
@@ -425,34 +406,9 @@ import { IItemModel } from './interfaces/item-model';
       }
     }
 
-    public updateSliderStyle(): void {
-      this.thumb.style.width = `${this.thumbWidthVal}px`;
-      this.thumb.style.height = `${this.thumbHeightVal}px`;
-      // this.thumb.style.left =  `${(-(this.thumbWidthVal / 4))}px`;  /*`${(-(this.thumbWidthVal - this.sliderContainerWidth) / 2)}px`;*/
-    }
-
-    public bindEvents(): void {
-      const patchedAddEventListener = document.addEventListener as PatchedEventListener;
-      patchedAddEventListener('touchmove', this.onTouchMove, {passive: false});
-      patchedAddEventListener('touchend', this.onMoveEnd, {passive: false});
-      document.addEventListener('mousemove', this.onMouseMove);
-      document.addEventListener('mouseup', this.onMoveEnd);
-      document.addEventListener('mouseleave', this.onMoveEnd);
-
-      window.addEventListener('resize', this.refresh);
-    }
-
-    public unbindEvents(): void {
-      window.removeEventListener('resize', this.refresh);
-      document.removeEventListener('touchmove', this.onTouchMove);
-      document.removeEventListener('touchend', this.onMoveEnd);
-      document.removeEventListener('mousemove', this.onMouseMove);
-      document.removeEventListener('mouseup', this.onMoveEnd);
-      document.removeEventListener('mouseleave', this.onMoveEnd);
-    }
-
-    public formatting (value: any): string {
-      return typeof this.formatter === 'string' ? this.formatter.replace(/\{value\}/, value) : this.formatter(value);
+    @Watch('value', { immediate: true, deep: true })
+    public onValueChanged(val: number): void {
+        this.flag || this.setValue(val, true);
     }
 
     public getItemPosition(e: IEventPosition): number {
@@ -462,98 +418,6 @@ import { IItemModel } from './interfaces/item-model';
       }
 
       return this.reverse ? (this.size - (e.clientX - this.thumb.clientWidth)) : (e.clientX - (2 * this.thumb.clientWidth));
-    }
-
-    public onTrackClick (e: IEventPosition): boolean {
-      if (this.isDisabled || !this.clickable) {
-        return false;
-      }
-      const pos = this.getItemPosition(e);
-      this.setValueOnPos(pos);
-      return true;
-    }
-
-    public onMoveStart (e: UIEvent, index: number): void {
-        if (this.stopPropagation) {
-          e.stopPropagation();
-        }
-
-        if (this.isDisabled) {
-          return;
-        }
-
-        this.flag = true;
-        this.$emit('drag-start', this);
-        return;
-    }
-
-    public onMouseMove (event: MouseEvent): void {
-      if (this.stopPropagation) {
-        event.stopPropagation();
-      }
-
-      if (!this.flag) {
-        return;
-      }
-
-      event.preventDefault();
-
-      this.setValueOnPos(this.getItemPosition(event), true);
-    }
-
-    public onTouchMove (event: TouchEvent): void {
-      if (this.stopPropagation) {
-        event.stopPropagation();
-      }
-
-      if (!this.flag) {
-        return;
-      }
-
-      event.preventDefault();
-
-      if (event.targetTouches[0]) {
-        this.setValueOnPos(this.getItemPosition(event.targetTouches[0]), true);
-      }
-    }
-
-    public onMoveEnd (event: UIEvent): void {
-      if (this.stopPropagation) {
-        event.stopPropagation();
-      }
-      if (this.flag) {
-        this.$emit('drag-end', this);
-        if (this.lazy && this.isDiff(this.val, this.value)) {
-          this.syncValue();
-        }
-        this.flag = false;
-        this.setPosition();
-      }
-    }
-
-    public setValueOnPos (pos: number, isDrag?: boolean): void {
-      const range = this.limit;
-      const valueRange =  this.valueLimit;
-      if (pos >= range[0] && pos <= range[1]) {
-        this.setTransform(pos);
-        const v = (Math.round(pos / this.gap) * (this.spacing * this.multiple) + (this.minimum * this.multiple)) / this.multiple;
-        this.setIndex(v, isDrag);
-      } else if (pos < range[0]) {
-        this.setTransform(range[0]);
-        this.setIndex(valueRange[0]);
-      } else {
-        this.setTransform(range[1]);
-        this.setIndex(valueRange[1]);
-      }
-    }
-
-    public isDiff (a: any, b: any): boolean {
-      if (Object.prototype.toString.call(a) !== Object.prototype.toString.call(b)) {
-        return true;
-      } else if (Array.isArray(a) && a.length === b.length) {
-        return a.some((v, i) => v !== b[i]);
-      }
-      return a !== b;
     }
 
     public setIndex (val: number, skipPositionSet?: boolean): void{
@@ -570,14 +434,6 @@ import { IItemModel } from './interfaces/item-model';
       return;
     }
 
-    public onAdHocClicked(val: number, $event: Event): void {
-      if (!this.clickable) {
-        return;
-      }
-      $event.stopPropagation();
-      this.setIndex(val);
-    }
-
     public setValue (val: number, noCallback?: any, speed?: number): void {
       if (this.isDiff(this.val, val)) {
         const resetVal = this.limitValue(val);
@@ -587,33 +443,85 @@ import { IItemModel } from './interfaces/item-model';
       this.$nextTick(() => this.setPosition(speed));
     }
 
-    public setPosition (speed?: number): void {
-      this.flag || this.setTransitionTime(speed === undefined ? this.speed : speed);
-      this.setTransform(this.position);
-      this.flag || this.setTransitionTime(0);
+    public getValue(): number {
+      return this.val;
     }
 
-    public setTransform (position: number): void {
-      const value = (position - (this.thumbWidthVal / 2)) * (this.reverse ? -1 : 1);
-      const translateValue =  `translateX(${value}px)`;
-      const progressSize = `${this.position - position}px`;
-      const progressPos = `${position}px`;
-
-      this.thumb.style.transform = translateValue;
-      this.thumb.style.webkitTransform = translateValue;
-      // this.trackContainerStyle.msTransform = translateValue;
-      this.progressBar.style.width = `${position + this.thumbSize}px`;
-      this.progressBar.style[this.reverse ? 'right' : 'left'] = '0';
+    public getIndex(): number {
+      return this.currentIndex;
     }
 
-    public setTransitionTime(time: number): void {
-      this.trackContainerStyle.transitionDuration = `${time}s`;
-      this.trackContainerStyle.webkitTransitionDuration = `${time}s`;
-      this.progressBar.style.transitionDuration = `${time}s`;
-      this.progressBar.style.webkitTransitionDuration = `${time}s`;
+    public refresh(): void {
+      if (this.track) {
+        this.updateTrackSize();
+        this.setPosition();
+      }
     }
 
-    public limitValue(val: number): any {
+    public mounted(): void {
+      this.track = this.$refs.track as VueHTMLElement;
+      this.thumb = this.$refs.thumb as VueHTMLElement;
+      this.progressBar = this.$refs.progress as VueHTMLElement;
+      this.isComponentExists = true;
+
+      this.updateThumbStyle();
+      if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return this.printError('[VueSlider error]: window or document is undefined, can not be initialization.');
+      }
+
+      this.$nextTick(() => {
+        if (this.isComponentExists) {
+          this.updateTrackSize();
+          this.setValue(this.limitValue(this.value), true, 0);
+          this.bindEvents();
+        }
+      });
+    }
+
+    public beforeDestroy(): void {
+      this.isComponentExists = false;
+      this.unbindEvents();
+    }
+
+    private bindEvents(): void {
+      const patchedAddEventListener = document.addEventListener as PatchedEventListener;
+      patchedAddEventListener('touchmove', this.onTouchMove, {passive: false});
+      patchedAddEventListener('touchend', this.onMoveEnd, {passive: false});
+      document.addEventListener('mousemove', this.onMouseMove);
+      document.addEventListener('mouseup', this.onMoveEnd);
+      document.addEventListener('mouseleave', this.onMoveEnd);
+
+      window.addEventListener('resize', this.refresh);
+    }
+
+    private unbindEvents(): void {
+      window.removeEventListener('resize', this.refresh);
+      document.removeEventListener('touchmove', this.onTouchMove);
+      document.removeEventListener('touchend', this.onMoveEnd);
+      document.removeEventListener('mousemove', this.onMouseMove);
+      document.removeEventListener('mouseup', this.onMoveEnd);
+      document.removeEventListener('mouseleave', this.onMoveEnd);
+    }
+
+    private convertIndexToValue(index: number): number {
+      const value  = (index * this.interval) + this.minimum;
+      return (index * this.interval) + this.minimum;
+    }
+
+    private formatting (value: any): string {
+      return typeof this.formatter === 'string' ? this.formatter.replace(/\{value\}/, value) : this.formatter(value);
+    }
+
+    private isDiff (a: any, b: any): boolean {
+      if (Object.prototype.toString.call(a) !== Object.prototype.toString.call(b)) {
+        return true;
+      } else if (Array.isArray(a) && a.length === b.length) {
+        return a.some((v, i) => v !== b[i]);
+      }
+      return a !== b;
+    }
+
+    private limitValue(val: number): any {
       if (this.data) {
         return val;
       }
@@ -632,35 +540,7 @@ import { IItemModel } from './interfaces/item-model';
       return inRange(val);
     }
 
-    public syncValue(noCallback?: boolean): void {
-      const val =  this.val;
-      this.$emit('input', val);
-      noCallback || this.$emit('callback', val);
-    }
-
-    public getValue(): number {
-      return this.val;
-    }
-
-    public getIndex(): number {
-      return this.currentIndex;
-    }
-
-    public updateTrackSize(): any {
-      const element = this.track;
-      if (element) {
-        this.size = element.offsetWidth;
-      }
-    }
-
-    public refresh(): void {
-      if (this.track) {
-        this.updateTrackSize();
-        this.setPosition();
-      }
-    }
-
-    public printError(msg: string): void {
+    private printError(msg: string): void {
       if (this.debug) {
         /* tslint:disable:no-console */
         console.error(msg);
@@ -668,29 +548,149 @@ import { IItemModel } from './interfaces/item-model';
       }
     }
 
-    public mounted(): void {
-      this.track = this.$refs.track as VueHTMLElement;
-      this.thumb = this.$refs.thumb as VueHTMLElement;
-      this.progressBar = this.$refs.progress as VueHTMLElement;
-      this.isComponentExists = true;
-
-      this.updateSliderStyle();
-      if (typeof window === 'undefined' || typeof document === 'undefined') {
-        return this.printError('[VueSlider error]: window or document is undefined, can not be initialization.');
+    private onAdHocClicked(val: number, $event: Event): void {
+      if (!this.clickable) {
+        return;
       }
-
-      this.$nextTick(() => {
-        if (this.isComponentExists) {
-          this.updateTrackSize();
-          this.setValue(this.limitValue(this.value), true, 0);
-          this.bindEvents();
-        }
-      });
+      $event.stopPropagation();
+      this.setIndex(val);
     }
 
-    public beforeDestroy(): void {
-      this.isComponentExists = false;
-      this.unbindEvents();
+    private onTrackClick (e: IEventPosition): boolean {
+      if (this.isDisabled || !this.clickable) {
+        return false;
+      }
+      const pos = this.getItemPosition(e);
+      this.setValueOnPos(pos);
+      return true;
+    }
+
+    private onMoveStart (e: UIEvent, index: number): void {
+        if (this.stopPropagation) {
+          e.stopPropagation();
+        }
+
+        if (this.isDisabled) {
+          return;
+        }
+
+        this.flag = true;
+        this.$emit('drag-start', this);
+        return;
+    }
+
+    private onMouseMove (event: MouseEvent): void {
+      if (this.stopPropagation) {
+        event.stopPropagation();
+      }
+
+      if (!this.flag) {
+        return;
+      }
+
+      event.preventDefault();
+
+      this.setValueOnPos(this.getItemPosition(event), true);
+    }
+
+    private onTouchMove (event: TouchEvent): void {
+      if (this.stopPropagation) {
+        event.stopPropagation();
+      }
+
+      if (!this.flag) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (event.targetTouches[0]) {
+        this.setValueOnPos(this.getItemPosition(event.targetTouches[0]), true);
+      }
+    }
+
+    private onMoveEnd (event: UIEvent): void {
+      if (this.stopPropagation) {
+        event.stopPropagation();
+      }
+      if (this.flag) {
+        this.$emit('drag-end', this);
+        if (this.lazy && this.isDiff(this.val, this.value)) {
+          this.syncValue();
+        }
+        this.flag = false;
+        this.setPosition();
+      }
+    }
+
+    private setPosition (speed?: number): void {
+      this.flag || this.setTransitionTime(speed === undefined ? this.speed : speed);
+      this.setTransform(this.position);
+      this.flag || this.setTransitionTime(0);
+    }
+
+    private setTransform (position: number): void {
+      const value = (position - (this.thumbWidthVal / 2)) * (this.reverse ? -1 : 1);
+      const translateValue =  `translateX(${value}px)`;
+      const progressSize = `${this.position - position}px`;
+      const progressPos = `${position}px`;
+
+      this.thumb.style.transform = translateValue;
+      this.thumb.style.webkitTransform = translateValue;
+      // this.trackContainerStyle.msTransform = translateValue;
+      this.progressBar.style.width = `${position + this.thumbSize}px`;
+      this.progressBar.style[this.reverse ? 'right' : 'left'] = '0';
+    }
+
+    private setTransitionTime(time: number): void {
+      this.trackContainerStyle.transitionDuration = `${time}s`;
+      this.trackContainerStyle.webkitTransitionDuration = `${time}s`;
+      this.progressBar.style.transitionDuration = `${time}s`;
+      this.progressBar.style.webkitTransitionDuration = `${time}s`;
+    }
+
+    private setValueOnPos (pos: number, isDrag?: boolean): void {
+      const range = this.limit;
+      const valueRange =  this.valueLimit;
+      if (pos >= range[0] && pos <= range[1]) {
+        this.setTransform(pos);
+        const v = (Math.round(pos / this.gapWidth) * (this.getInterval * this.multiple) + (this.minimum * this.multiple)) / this.multiple;
+        this.setIndex(v, isDrag);
+      } else if (pos < range[0]) {
+        this.setTransform(range[0]);
+        this.setIndex(valueRange[0]);
+      } else {
+        this.setTransform(range[1]);
+        this.setIndex(valueRange[1]);
+      }
+    }
+
+    private syncValue(noCallback?: boolean): void {
+      const val =  this.val;
+      this.$emit('input', val);
+      noCallback || this.$emit('callback', val);
+    }
+
+    private unpackStyle(definition: cssStyleDefinition ): CSSStyleDeclaration | null {
+        if (typeof definition === 'function') {
+          return definition(this.val, this.currentIndex);
+        }
+        else {
+          return definition;
+        }
+    }
+
+    private updateThumbStyle(): void {
+      this.thumb.style.width = `${this.thumbWidthVal}px`;
+      this.thumb.style.height = `${this.thumbHeightVal}px`;
+      // this.thumb.style.left =  `${(-(this.thumbWidthVal / 4))}px`;  /*`${(-(this.thumbWidthVal - this.sliderContainerWidth) / 2)}px`;*/
+    }
+
+    private updateTrackSize(): any {
+      const element = this.track;
+      if (element) {
+        this.size = element.offsetWidth;
+      }
     }
   }
 </script>

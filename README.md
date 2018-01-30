@@ -1,29 +1,19 @@
 # vue-slider-component
+This is a vastly simplified and typescript-based/importable fork of the vue-slider-component. The option to support ranged (with two thumbs) and vertical (not horizontal :) ) sliders have been removed, as these are not use cases for us and it greatly reduces the amount of code needed. Some key differences:
 
-[![downloads](https://img.shields.io/npm/dt/vue-slider-component.svg)](https://www.npmjs.com/package/vue-slider-component)
-[![npm-version](https://img.shields.io/npm/v/vue-slider-component.svg)](https://www.npmjs.com/package/vue-slider-component)
-[![license](https://img.shields.io/npm/l/express.svg)]()
+* Dropped Vue 1.x support
+* The thing you slide is called "thumb" (previously "dot" and "slider")
+* The thing you slide on is called "track" (previously "elem")
+* The default blue bar has been renamed "progress" (previously "process")
+* The tooltip is not re-named.
+* Additional "Add hoc" - specify the value these relate to and any data you want in the template. When specified, a fly-out will appear under the track, allowing highlighting of important items
 
-Can use the slider in vue1.x and vue2.x. (No longer update vue1.x, but still can be normal use)
+This has only been tested via the demo - other scenerios may not work, nor have other versions of vue been tested. There is some work still to do - the code is currently too monolithic for my liking, partly as it has no notion of a model (though arguably the separation between viewmodel and model is blurred in a pure component). There is some repeated code surrounding calculations (e.g. halving the thumb size to find its centre).
 
-[Demo](https://nightcatsama.github.io/vue-slider-component/example/)
-
-[Live Demo](https://jsfiddle.net/2xy72dod/167/)
-
-## Todo
-
-- [x] Basis
-- [x] Display maximum value & minimum value
-- [x] piecewise style
-- [x] Compatible with PC and mobile terminal
-- [x] Tooltip
-- [x] The custom data
-- [x] Range
-- [x] The vertical component
 
 ## Install
 ``` bash
-npm install vue-slider-component --save
+npm install git://github.com/tombolaltd/leading-line-remover-loader.git#1.0.0 --save
 ```
 
 ## Exceptions
@@ -36,119 +26,153 @@ The solution:
 
 Example: <https://jsfiddle.net/2xy72dod/254/>
 
-## Run example
-``` bash
-cd example/
-
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:9000
+## Demo
+Run
+```
 npm run dev
 ```
-
+The demo is available on localhost:08080
 ## Usage
 
-#### Use in vue1.x:
-
-```html
-<template>
-  <div>
-    <vue-slider v-ref:slider :value.sync="value"></vue-slider>
-  </div>
-</template>
-<script>
-// Used only in vue1.x version
-import vueSlider from 'vue-slider-component/src/vue-slider.vue';
-
-new Vue({
-  el: '#app',
-  components: {
-    vueSlider
-  },
-  data: {
-    value: 1
-  }
-});
-</script>
-```
+Import the component from the UMD, and include the component in HTML. The demo examples provide a more exhaustive guide - there are lots of configuration options even in this cut down verison.
 <br>
-
-#### Use in vue2.x:
-
-```html
-<template>
-  <div>
-    <vue-slider ref="slider" v-model="value"></vue-slider>
-  </div>
-</template>
-<script>
-// Used only in vue2.x version
-import vueSlider from 'vue-slider-component'
-// or
-// import vueSlider from 'vue-slider-component/src/vue2-slider.vue'
-
-new Vue({
-  el: '#app',
-  components: {
-    vueSlider
-  },
-  data: {
-    value: 1
-  }
-});
-</script>
-```
-<br>
-
-#### Use with Browserify (vueify):
-
-```js
-import vueSlider from 'vue-slider-component/src/vue2-slider.vue'
-```
-
 
 ## Options
 
 ### Props
+
+@Prop({default: () => [] })
+    public adHocData: IAdHocData[];
+
+    @Prop({default: null})
+    public containerStyle: cssStyleDefinition;
+
+    @Prop({default: true})
+    public clickable: boolean;
+
+    @Prop({default: null})
+    public data: any[] | null;
+
+    @Prop({default: process && process.env && process.env.NODE_ENV !== 'production'})
+    public debug: boolean;
+
+    @Prop({default: false})
+    public disabled: boolean;
+
+    @Prop()
+    public dotStyle: cssStyleDefinition;
+
+    @Prop()
+    public formatter: string | formatterFunction;
+
+    @Prop({default: 1})
+    public interval: number;
+
+    @Prop()
+    public labelStyle: cssStyleDefinition;
+
+    @Prop({default: false})
+    public lazy: boolean;
+
+    @Prop({default: 0})
+    public min: number;
+
+    @Prop({default: 100})
+    public max: number;
+
+    @Prop()
+    public progressBarStyle: cssStyleDefinition;
+
+    @Prop({default: false})
+    public realTime: boolean;
+
+    @Prop({default: false})
+    public reverse: boolean;
+
+    @Prop({default: true})
+    public showAdHoc: boolean;
+
+    @Prop({default: true})
+    public show: boolean;
+
+    @Prop({default: true})
+    public showDots: boolean;
+
+    @Prop({default: false})
+    public showItemLabel: boolean;
+
+    @Prop({default: 0.5})
+    public speed: number;
+
+    @Prop({default: false})
+    public stopPropagation: boolean;
+
+    @Prop({default: null})
+    public thumbHeight: number | null;
+
+    @Prop({default: 16})
+    public thumbSize: number;
+
+    @Prop({default: null})
+    public thumbStyle: cssStyleDefinition;
+
+    @Prop({default: null})
+    public thumbWidth: number | null;
+
+    @Prop({default: 'always'})
+    public tooltip: tooltipVisibility;
+
+    @Prop({default: null})
+    public tooltipDir: tooltipDirection | null;
+
+    @Prop({default: null})
+    public tooltipStyle: cssStyleDefinition;
+
+    @Prop()
+    public trackStyle: cssStyleDefinition;
+
+    @Prop({default: 0})
+    public value: number;
+
+
+
 | Props       | Type          | Default  | Description  |
 | ----------- |:--------------| ---------|--------------|
-| direction   | String        | horizontal | set the direction of the component, optional value: ['horizontal', 'vertical'] |
-| event-type  | String        | auto   | the event type, optional value: ['auto', 'none'] |
-| width       | Number[,String(in horizontal)] | auto | width of the component |
-| height      | Number[,String(in vertical)] | 6        | height of the component |
-| dot-size    | Number        | 16       | determines width and height of the sliders. to set different values of `width` & `height` use `dot-width` & `dot-height` props |
-| dot-width   | Number        | value of `dot-size` prop | width of sliders. if specified, overrides value of `dot-size` |
-| dot-height  | Number        | value of `dot-size` prop | height of sliders. if specified, overrides value of `dot-size` |
+| adHocData   | IAdHocData    | null     | Allows the creation of ad-hoc call outs, a slot is provided to format, otheriwse the value is displayed |
+| event-type  | String        | auto     | the event type, optional value: ['auto', 'none'] |
+| width       | CSSSize       | auto     | width of the component |
+| height      | CSSSize       | 6        | height of the component |
+| thumb-size  | Number        | 16       | determines width and height of the slider thumb. to set different values of `width` & `height` use `thumb-width` & `thumb-height` props |
+| thumb-width | Number        | value of `thumb-size` prop | width of slider's thumb. if specified, overrides value of `thumb-size` |
+| thumb-height| Number        | value of `thumb-size` prop | height of slider's thumb. if specified, overrides value of `dot-thumb` |
 | min         | Number        | 0        | the minimum value   |
 | max         | Number        | 100      | the maximum value   |
-| interval    | Number        | 1        | the gap between the values |
+| interval    | Number        | 1        | the interval between the values, must be a factor of max - min |
 | show        | Boolean       | true     | display of the component |
 | speed       | Number        | 0.5      | transition time |
 | disabled    | Boolean       | false    | whether to disable components |
 | debug       | Boolean       | process.env.NODE_ENV !== 'production' | `debug="true"` will print errors in the console |
-| piecewise   | Boolean       | false    | whether to display the piecewise |
-| piecewise-label*   | Boolean  | false  | whether to display the label. [demo here](https://nightcatsama.github.io/vue-slider-component/example/#demo2) |
+| item        | Boolean       | false    | whether to display the item |
+| item-label* | Boolean       | false    | whether to display the item |
 | tooltip     | String, Boolean | always    | control the tooltip, optional value: ['hover', 'always', false] |
 | tooltip-dir | String[,Array(in range model) | top(in horizontal)or left(in vertical) | set the direction of the tooltip, optional value: ['top', 'bottom', 'left', 'right'] |
-| reverse     | Boolean       | false    | whether the component reverse (such as Right to left, Top to bottom) |
+| reverse     | Boolean       | false    | reverse the component (Right to left) |
 | value       | Number,Array  | 0        | initial value (if the value for the array open range model) |
 | data        | Array         | null     | the custom data. |
 | clickable   | Boolean       | true     | Whether or not the slider is clickable as well as drag-able |
-| stop-propagation*  | Boolean       | false    | All events call `stopPropagation` |
-| real-time*  | Boolean       | false    | Whether the real-time computing the layout of the components |
-| lazy*       | Boolean       | false    | At the end of the drag and drop, to synchronization value (if each update to high consumption of operation (such as Ajax), it is more useful) |
-| formatter*        | String,Function | null   | Formatting a tooltip values, Example: `formatter='¥{value}'` or `` formatter: (v) => `¥${v}` ``. [demo here](https://nightcatsama.github.io/vue-slider-component/example/#demo3) |
-| bg-style*         | Object | null  | The style of the background. |
-| slider-style*     | Object[,Array(in range model), Function<Value, Index>] | null  | The style of the slider. |
-| process-style*    | Object | null  | The style of the process bar. |
-| piecewise-style*  | Object | null  | The style of the piecewise dot. |
-| piecewise-active-style*  | Object | null  | The style of the piecewise dot in the activated state. |
-| tooltip-style*    | Object[,Array(in range model), Function<Value, Index>] | null  | The style of the tooltip. |
-| label-style*      | Object | null  | The style of the label. |
-| label-active-style*      | Object | null  | The style of the label in the activated state. |
+| stop-propagation  | Boolean       | false    | All events call `stopPropagation` |
+| real-time   | Boolean       | false    | Whether the real-time computing the layout of the components |
+| lazy        | Boolean       | false    | At the end of the drag and drop, to synchronization value (if each update to high consumption of operation (such as Ajax), it is more useful) |
+| formatter      | String,Function | null   | Formatting a tooltip values, Example: `formatter='¥{value}'` or `` formatter: (v) => `¥${v}` ``. |
+| track-style    | CSSStyleDeclaration,  null, Function<Value, Index> | null  | The style of the trackbar/background. |
+| thumb-style    | CSSStyleDeclaration,  null, Function<Value, Index> | null  | The style of the slider thumb. |
+| progress-style | CSSStyleDeclaration,  null, Function<Value, Index> | null  | The style of the progress bar. |
+| dot-style      | CSSStyleDeclaration,  null, Function<Value, Index> | null  | The style of the piecewise dot. |
+| tooltip-style  | CSSStyleDeclaration,  null, Function<Value, Index> | null  | The style of the tooltip. |
+| label-style    | CSSStyleDeclaration,  null, Function<Value, Index> | null  | The style of the label. |
+| ad-hoc-style   | CSSStyleDeclaration,  null, Function<Value, Index> | null  | The style of the ad-hoc data box. |
 
-prop*: [only support vue2]
+Note that, in general, styles can be defined directly, or are functions which have the value and index passed which return a CSSStyleDeclaration. That latter can be used to change style according to value, though this is untested by the demo.
 
 ### Function
 | Name        | Type           | Description                |
@@ -172,70 +196,11 @@ prop*: [only support vue2]
 ### Slot
 | Name          | Description  |
 | --------------|--------------|
-| tooltip       | Customize the tooltip slot. optional value: [`value`, `index`(only range model)] |
-| piecewise     | Customize the piecewise slot. optional value: [`label`, `index`, `active`, `first`, `last`] |
+| tooltip       | Customize the tooltip slot. optional value: [`value`, `index`(only range model)]  |
+| item          | Customize the item slot. optional value: [`label`, `index`, `active`, `first`, `last`] |
 | label         | Customize the label slot. optional value: [`label`, `index`, `active`, `first`, `last`] |
+| adHoc         | Customize the ad-hoc data fly-out, this is scoped. An ItemModel is supplied per element |
 
-[#](https://vuejs.org/v2/guide/components.html#Scoped-Slots) When using the template element as a slot, can add special properties `scope` or `slot-scope` to get the value.
-
-e.g.
-```html
-<vue-slider v-model="value">
-  <template slot="tooltip" scope="{ value }">
-    <div class="diy-tooltip">
-      {{ value }}
-    </div>
-  </template>
-</vue-slider>
-
-<!-- In vue2.5 above, please use slot-scope instead of scope -->
-<vue-slider v-model="value">
-  <div class="diy-tooltip" slot="tooltip" slot-scope="{ value }">
-    {{ value }}
-  </div>
-</vue-slider>
-```
-
-## Using it with NUXT.js
-
-This hack is just to avoid the server side 'document' error when using it with Nuxt.js.
-Use it if you don't need to have this component rendered on the server side.
-
-1. Install [this](https://github.com/egoist/vue-no-ssr) and add it to the variable `components`. i.e.
-```js
-import NoSSR from 'vue-no-ssr'
-
-let components = {
-    /**
-     * Add No Server Side Render component
-     * to make client DOM math the server DOM
-     */
-    'no-ssr': NoSSR
-}
-```
-
-2. In your template, encapsulate 'vue-slider-component' into the 'no-ssr' component to avoid redner the html on the server like this:
-```html
-<no-ssr>
-    <vue-slider ref="slider"></vue-slider>
-</no-ssr>
-```
-
-3. Require the library just for client side and add the 'vue-slider-component' component to the template component list
-```js
-if (process.browser) {
-    // in older versions of nuxt, it's process.BROWSER_BUILD
-    let VueSlider = require('vue-slider-component')
-    components['vue-slider'] = VueSlider
-}
-```
-
-4. Apply the components
-```js
-export default {
-    components
-}
-```
 
 ## License
 
