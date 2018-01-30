@@ -1,24 +1,36 @@
 <template>
   <div id="app">
     <div class="demo-container">
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :progressBarStyle="progressBarStyle" :sliderStyle="sliderStyle" class="tombola-styled" >
+      <h2>Complex Styling</h2>
+      <vue-slider v-model="value" :height="16" min="1" max="90" :value="value" :progressBarStyle="progressBarStyle" :sliderStyle="sliderStyle" class="tombola-styled" >
       <template slot="tooltip">
          <span class="vue-slider-tooltip">{{ value }} / 90</span>
       </template>
     </vue-slider>
     </div>
     <div class="demo-container">
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :disabled="true" ></vue-slider>
+      <h2>Basic</h2>
+      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" ></vue-slider>
     </div>
-     <div class="demo-container">
+    <div class="demo-container">
+      <h2>Reversed</h2>
       <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :reverse="true"></vue-slider>
     </div>
     <div class="demo-container">
-      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" ></vue-slider>
-    </div>
-
-    <div class="demo-container">
+      <h2>Tooltip on Hover</h2>
       <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" tooltip="hover" ></vue-slider>
+    </div>
+     <div class="demo-container">
+       <h2>Interval</h2>
+      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :interval="5"></vue-slider>
+    </div>
+    <div class="demo-container">
+      <h2>Disabled</h2>
+      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :disabled="true" ></vue-slider>
+    </div>
+    <div class="demo-container">
+       <h2>Not Clickable (Just Draggable)</h2>
+      <vue-slider v-model="value" :height="16" min="1" max="90" :current-value="value" :sliderStyle="sliderStyle" :clickable="false"></vue-slider>
     </div>
 
   <div>Current value= {{ value }}</div>
@@ -93,7 +105,9 @@ body {
 }
 
 .demo-container {
-  margin-bottom: 25px;
+  h2 {
+    margin-bottom: 25px;
+  }
 }
 
 </style>

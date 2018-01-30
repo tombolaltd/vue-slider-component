@@ -53,24 +53,6 @@ import { PatchedEventListener } from './event-listener-patch';
   @Component({ })
   export default class VueSliderComponent extends Vue {
 
-    @Provide()
-    public flag: boolean = false;
-
-    @Provide()
-    public size: number = 0;
-
-    @Provide()
-    public currentValue: number  = 0;
-
-    @Provide()
-    public isComponentExists: boolean = true;
-
-    @Prop({default: 'auto'})
-    public width: cssSize;
-
-    @Prop({default: 6})
-    public height: cssSize;
-
     @Prop({default: null})
     public data: any[] | null;
 
@@ -160,6 +142,24 @@ import { PatchedEventListener } from './event-listener-patch';
 
     @Prop()
     public labelActiveStyle: object;
+
+    @Provide()
+    private flag: boolean = false;
+
+    @Provide()
+    private size: number = 0;
+
+    @Provide()
+    private currentValue: number  = 0;
+
+    @Provide()
+    private isComponentExists: boolean = true;
+
+    @Prop({default: 'auto'})
+    private width: cssSize;
+
+    @Prop({default: 6})
+    private height: cssSize;
 
     private thumb: VueElement;
     private track: VueElement;
