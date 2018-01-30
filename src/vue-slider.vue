@@ -35,7 +35,7 @@ export type style = object | any[];
 export type styleFunction  = (val: number, index: number) => CSSStyleDeclaration;
 export type tooltipVisibility = 'hover'|'always'| boolean;
 export type tooltipDir = 'top'|'bottom'|'left'|'right';
-export type VueElement = Vue & HTMLElement;
+export type VueHTMLElement = Vue & HTMLElement;
 
 export interface IEventPosition {
     readonly clientX: number;
@@ -161,9 +161,9 @@ import { PatchedEventListener } from './event-listener-patch';
     @Prop({default: 6})
     private height: cssSize;
 
-    private thumb: VueElement;
-    private track: VueElement;
-    private progressBar: VueElement;
+    private thumb: VueHTMLElement;
+    private track: VueHTMLElement;
+    private progressBar: VueHTMLElement;
 
     constructor() {
         super();
@@ -638,9 +638,9 @@ import { PatchedEventListener } from './event-listener-patch';
     }
 
     public mounted(): void {
-      this.track = this.$refs.track as VueElement;
-      this.thumb = this.$refs.dot as VueElement;
-      this.progressBar = this.$refs.progress as VueElement;
+      this.track = this.$refs.track as VueHTMLElement;
+      this.thumb = this.$refs.dot as VueHTMLElement;
+      this.progressBar = this.$refs.progress as VueHTMLElement;
       this.isComponentExists = true;
 
       this.updateSliderStyle();
