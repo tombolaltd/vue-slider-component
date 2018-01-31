@@ -9,8 +9,7 @@
       <template slot="adHoc" scope="props">
         <span class="additional-info">{{props.itemModel.adHocData.data.prize}}: {{ props.itemModel.adHocData.value }}
           <span class="additional-info-text">
-              <div v-for="(winner, index) in props.itemModel.adHocData.data.winners" :index="index">{{ winner }}</div>
-              <!-- <div>{{ props.itemModel.adHocData.data.winners }}</div> -->
+              <div v-for="(winner, index) in props.itemModel.adHocData.data.winners" :key="index">{{ winner }}</div>
           </span>
         </span>
       </template>
