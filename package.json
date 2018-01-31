@@ -10,6 +10,7 @@
     "vue-slider-component"
   ],
   "main": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NightCatSama/vue-slider-component.git"
