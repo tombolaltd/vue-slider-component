@@ -1,5 +1,5 @@
 <template>
-  <div :class="['vue-slider-component', flowDirection, disabledClass, { 'vue-slider-has-label': showItemLabel }]" v-show="show" :style="getContainerStyle" >
+  <div ref="root" :class="['noselect', 'vue-slider-component', flowDirection, disabledClass, { 'vue-slider-has-label': showItemLabel }]" v-show="show" :style="getContainerStyle" >
     <div ref="track" aria-hidden="true" class="vue-slider-track" :style="getTrackStyle" @click="onTrackClick">
       <template>
         <div ref="thumb" :class="[tooltipStatusClass, 'vue-slider-thumb']" :style="[thumbOffsetStyle, getThumbStyle]" @mousedown="onMoveStart" @touchstart="onMoveStart" v-cloak>
@@ -152,7 +152,7 @@ import { IItemModel } from './interfaces/item-model';
     private currentValue: number  = 0;
 
     @Provide()
-    private flag: boolean = false;
+    private movingFlag: boolean = false;
 
     @Provide()
     private isComponentExists: boolean = true;
@@ -160,9 +160,10 @@ import { IItemModel } from './interfaces/item-model';
     @Provide()
     private size: number = 0;
 
+    private progressBar: VueHTMLElement;
+    private root: VueHTMLElement;
     private thumb: VueHTMLElement;
     private track: VueHTMLElement;
-    private progressBar: VueHTMLElement;
 
     constructor() {
         super();
@@ -368,7 +369,7 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private get tooltipStatusClass(): string {
-        return this.tooltip === 'hover' && this.flag ? 'vue-slider-always' : this.tooltip ? `vue-slider-${this.tooltip}` : '';
+        return this.tooltip === 'hover' && this.movingFlag ? 'vue-slider-always' : this.tooltip ? `vue-slider-${this.tooltip}` : '';
     }
 
     private get trackContainerStyle(): CSSStyleDeclaration {
@@ -408,16 +409,27 @@ import { IItemModel } from './interfaces/item-model';
 
     @Watch('value', { immediate: true, deep: true })
     public onValueChanged(val: number): void {
-        this.flag || this.setValue(val, true);
+        this.movingFlag || this.setValue(val, true);
     }
 
-    public getItemPosition(e: IEventPosition): number {
+    public getItemPosition(event: IEventPosition): number {
       if (this.realTime) {
         // Force update of static data
         this.updateTrackSize();
       }
 
-      return this.reverse ? (this.size - (e.clientX - this.thumb.clientWidth)) : (e.clientX - (2 * this.thumb.clientWidth));
+      const rect = this.track.getBoundingClientRect();
+      const scale = this.track.clientWidth / (rect.right - rect.left);
+      const scaledX = event.clientX * scale / scale;
+
+            /* tslint:disable:no-console */
+      console.log('***************************************************');
+      console.log(rect);
+      console.log(event);
+      console.log('***************************************************');
+      /* tslint:enable:no-console */
+
+      return this.reverse ? (this.size - (scaledX - this.thumb.clientWidth)) : (scaledX - (2 * this.thumb.clientWidth));
     }
 
     public setIndex (val: number, skipPositionSet?: boolean): void{
@@ -426,7 +438,7 @@ import { IItemModel } from './interfaces/item-model';
       }
       if (this.isDiff(this.currentValue, val)) {
         this.currentValue = val;
-        if (!this.lazy || !this.flag) {
+        if (!this.lazy || !this.movingFlag) {
           this.syncValue();
         }
       }
@@ -459,6 +471,7 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     public mounted(): void {
+      this.root = this.$refs.root as VueHTMLElement;
       this.track = this.$refs.track as VueHTMLElement;
       this.thumb = this.$refs.thumb as VueHTMLElement;
       this.progressBar = this.$refs.progress as VueHTMLElement;
@@ -484,13 +497,13 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private bindEvents(): void {
+      // Be vary wary of touching this stuff - the addition order is important for IE (and Edge probably)
       const patchedAddEventListener = document.addEventListener as PatchedEventListener;
+      document.addEventListener('mouseup', this.onMoveEnd);
+      document.addEventListener('mousemove', this.onMouseMove);
       patchedAddEventListener('touchmove', this.onTouchMove, {passive: false});
       patchedAddEventListener('touchend', this.onMoveEnd, {passive: false});
-      document.addEventListener('mousemove', this.onMouseMove);
-      document.addEventListener('mouseup', this.onMoveEnd);
       document.addEventListener('mouseleave', this.onMoveEnd);
-
       window.addEventListener('resize', this.refresh);
     }
 
@@ -501,6 +514,7 @@ import { IItemModel } from './interfaces/item-model';
       document.removeEventListener('mousemove', this.onMouseMove);
       document.removeEventListener('mouseup', this.onMoveEnd);
       document.removeEventListener('mouseleave', this.onMoveEnd);
+      document.removeEventListener('drag', this.onMoveEnd);
     }
 
     private convertIndexToValue(index: number): number {
@@ -566,43 +580,39 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onMoveStart (e: UIEvent, index: number): void {
-        if (this.stopPropagation) {
-          e.stopPropagation();
-        }
+        /* tslint:disable:no-console */
+      console.log('onMoveStart');
+      /* tslint:enable:no-console */
 
         if (this.isDisabled) {
           return;
         }
 
-        this.flag = true;
+        this.movingFlag = true;
         this.$emit('drag-start', this);
         return;
     }
 
     private onMouseMove (event: MouseEvent): void {
-      if (this.stopPropagation) {
-        event.stopPropagation();
-      }
+      /* tslint:disable:no-console */
+      console.log('onMouseMove');
+      /* tslint:enable:no-console */
 
-      if (!this.flag) {
+      if (!this.movingFlag) {
         return;
       }
-
-      event.preventDefault();
 
       this.setValueOnPos(this.getItemPosition(event), true);
     }
 
     private onTouchMove (event: TouchEvent): void {
-      if (this.stopPropagation) {
-        event.stopPropagation();
-      }
+      /* tslint:disable:no-console */
+      console.log('onTouchMove');
+      /* tslint:enable:no-console */
 
-      if (!this.flag) {
+      if (!this.movingFlag) {
         return;
       }
-
-      event.preventDefault();
 
       if (event.targetTouches[0]) {
         this.setValueOnPos(this.getItemPosition(event.targetTouches[0]), true);
@@ -610,23 +620,24 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onMoveEnd (event: UIEvent): void {
-      if (this.stopPropagation) {
-        event.stopPropagation();
-      }
-      if (this.flag) {
+      /* tslint:disable:no-console */
+      console.log('onMoveEnd');
+      /* tslint:enable:no-console */
+
+      if (this.movingFlag) {
         this.$emit('drag-end', this);
         if (this.lazy && this.isDiff(this.val, this.value)) {
           this.syncValue();
         }
-        this.flag = false;
+        this.movingFlag = false;
         this.setPosition();
       }
     }
 
     private setPosition (speed?: number): void {
-      this.flag || this.setTransitionTime(speed === undefined ? this.speed : speed);
+      this.movingFlag || this.setTransitionTime(speed === undefined ? this.speed : speed);
       this.setTransform(this.position);
-      this.flag || this.setTransitionTime(0);
+      this.movingFlag || this.setTransitionTime(0);
     }
 
     private setTransform (position: number): void {
@@ -637,7 +648,7 @@ import { IItemModel } from './interfaces/item-model';
 
       this.thumb.style.transform = translateValue;
       this.thumb.style.webkitTransform = translateValue;
-      // this.trackContainerStyle.msTransform = translateValue;
+      // this.trackContainerStyle['msTransform'] = translateValue; // < IE10
       this.progressBar.style.width = `${position + this.thumbSize}px`;
       this.progressBar.style[this.reverse ? 'right' : 'left'] = '0';
     }
@@ -706,6 +717,16 @@ import { IItemModel } from './interfaces/item-model';
   @track-border-radius: 15px;
   @ad-hoc-marker-height: 5px;
   @dot-width: 25%;
+
+  .noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+      -khtml-user-select: none; /* Konqueror HTML */
+        -moz-user-select: none; /* Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome and Opera */
+  }
 
   .vue-slider-component {
     position: relative;
