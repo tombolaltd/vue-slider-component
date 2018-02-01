@@ -32,6 +32,13 @@ Run
 npm run dev
 ```
 The demo is available on localhost:08080
+## Release
+Raise the package version in package.json
+run 
+```
+npm run dev
+```
+Wait until build, then commit all directories (including dist!). Commit, push and label as release in Git as ususal
 ## Usage
 
 Import the component from the UMD, and include the component in HTML. The demo examples provide a more exhaustive guide - there are lots of configuration options even in this cut down verison.

@@ -421,33 +421,26 @@ import { IItemModel } from './interfaces/item-model';
         this.updateTrackSize();
       }
 
-      // const scaledX = event.clientX * this.xScale;
       let scaledX = event.clientX;
       const size = this.size;
       const thumbWidth = this.thumb.clientWidth;
+      const trackWidth = this.track.clientWidth;
 
-      /* tslint:disable:no-console */
-      // console.log('***************************************************');
       if (this.track.parentElement){
-        // console.log (this.track.parentElement.clientWidth);
-        // const factor = (rect.width / this.track.parentElement.clientWidth);
-        // offset = this.track.parentElement.offsetLeft + this.track.offsetLeft;
-        // scaledX = (scaledX - (3 * thumbWidth) - offset) / factor;
-        // // console.log (this.track.parentElement);
-        // // console.log (this.track);
-        // console.log (event.clientX, 'kjnsklndojsdhjon');
-        // console.log (this.track.parentElement.offsetLeft);
         const rect = this.track.getBoundingClientRect();
-        const offesetCalc = - 10 - 8 - 8 - 50 - 50; // 50 = margin of parent 50=viewport margin 10=viewport padding 8=track padding 8 = dot width
-        scaledX = scaledX - rect.left - 8;
-        // console.log(event.clientX, scaledX);
+        const rectWidth = rect.right - rect.left; // Don't use .width, unreliable on some browsers
 
+        scaledX = scaledX - rect.left - (thumbWidth / 2); // This sets the origin
+        scaledX = scaledX * trackWidth / rectWidth;  // This scales the viewport
       }
-      // console.log(this.xScale);
-      // console.log('***************************************************');
-      /* tslint:enable:no-console */
 
-      return this.reverse ? (this.track.clientWidth - scaledX - 16) : (scaledX);
+      if (this.reverse) {
+        // Calc position is calculated for the left edge of the thumb, need to subtract half a thumb width
+        // to get "centre", then another half thumb width to adjust right.
+        scaledX = trackWidth  - scaledX - thumbWidth;
+      }
+
+      return scaledX;
     }
 
     public setIndex (val: number, skipPositionSet?: boolean): void{
@@ -598,10 +591,6 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onMoveStart (e: UIEvent, index: number): void {
-        /* tslint:disable:no-console */
-      console.log('onMoveStart');
-      /* tslint:enable:no-console */
-
         if (this.isDisabled) {
           return;
         }
@@ -612,10 +601,6 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onMouseMove (event: MouseEvent): void {
-      // /* tslint:disable:no-console */
-      // console.log('onMouseMove');
-      // /* tslint:enable:no-console */
-
       if (!this.movingFlag) {
         return;
       }
@@ -624,10 +609,6 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onTouchMove (event: TouchEvent): void {
-      // /* tslint:disable:no-console */
-      // console.log('onTouchMove');
-      // /* tslint:enable:no-console */
-
       if (!this.movingFlag) {
         return;
       }
@@ -638,10 +619,6 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onMoveEnd (event: UIEvent): void {
-      // /* tslint:disable:no-console */
-      // console.log('onMoveEnd');
-      // /* tslint:enable:no-console */
-
       if (this.movingFlag) {
         this.$emit('drag-end', this);
         if (this.lazy && this.isDiff(this.val, this.value)) {

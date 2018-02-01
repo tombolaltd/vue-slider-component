@@ -820,12 +820,17 @@ var VueSliderComponent = (function (_super) {
         var scaledX = event.clientX;
         var size = this.size;
         var thumbWidth = this.thumb.clientWidth;
+        var trackWidth = this.track.clientWidth;
         if (this.track.parentElement) {
             var rect = this.track.getBoundingClientRect();
-            var offesetCalc = -10 - 8 - 8 - 50 - 50;
-            scaledX = scaledX - rect.left - 8;
+            var rectWidth = rect.right - rect.left;
+            scaledX = scaledX - rect.left - (thumbWidth / 2);
+            scaledX = scaledX * trackWidth / rectWidth;
         }
-        return this.reverse ? (this.track.clientWidth - scaledX - 16) : (scaledX);
+        if (this.reverse) {
+            scaledX = trackWidth - scaledX - thumbWidth;
+        }
+        return scaledX;
     };
     VueSliderComponent.prototype.setIndex = function (val, skipPositionSet) {
         if (val < this.minimum || val > this.maximum) {
@@ -957,7 +962,6 @@ var VueSliderComponent = (function (_super) {
         return true;
     };
     VueSliderComponent.prototype.onMoveStart = function (e, index) {
-        console.log('onMoveStart');
         if (this.isDisabled) {
             return;
         }
