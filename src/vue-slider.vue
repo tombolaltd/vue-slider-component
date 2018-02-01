@@ -421,7 +421,7 @@ import { IItemModel } from './interfaces/item-model';
         this.updateTrackSize();
       }
 
-      let scaledX = event.clientX;
+      let newPosition = event.clientX;
       const size = this.size;
       const thumbWidth = this.thumb.clientWidth;
       const trackWidth = this.track.clientWidth;
@@ -430,17 +430,17 @@ import { IItemModel } from './interfaces/item-model';
         const rect = this.track.getBoundingClientRect();
         const rectWidth = rect.right - rect.left; // Don't use .width, unreliable on some browsers
 
-        scaledX = scaledX - rect.left - (thumbWidth / 2); // This sets the origin
-        scaledX = scaledX * trackWidth / rectWidth;  // This scales the viewport
+        newPosition = newPosition - rect.left - (thumbWidth / 2); // This sets the origin
+        newPosition = newPosition * trackWidth / rectWidth;  // This scales the viewport
       }
 
       if (this.reverse) {
         // Calc position is calculated for the left edge of the thumb, need to subtract half a thumb width
         // to get "centre", then another half thumb width to adjust right.
-        scaledX = trackWidth  - scaledX - thumbWidth;
+        newPosition = trackWidth  - newPosition - thumbWidth;
       }
 
-      return scaledX;
+      return newPosition;
     }
 
     public setIndex (val: number, skipPositionSet?: boolean): void{

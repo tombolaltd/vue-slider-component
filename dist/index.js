@@ -817,20 +817,20 @@ var VueSliderComponent = (function (_super) {
         if (this.realTime) {
             this.updateTrackSize();
         }
-        var scaledX = event.clientX;
+        var newPosition = event.clientX;
         var size = this.size;
         var thumbWidth = this.thumb.clientWidth;
         var trackWidth = this.track.clientWidth;
         if (this.track.parentElement) {
             var rect = this.track.getBoundingClientRect();
             var rectWidth = rect.right - rect.left;
-            scaledX = scaledX - rect.left - (thumbWidth / 2);
-            scaledX = scaledX * trackWidth / rectWidth;
+            newPosition = newPosition - rect.left - (thumbWidth / 2);
+            newPosition = newPosition * trackWidth / rectWidth;
         }
         if (this.reverse) {
-            scaledX = trackWidth - scaledX - thumbWidth;
+            newPosition = trackWidth - newPosition - thumbWidth;
         }
-        return scaledX;
+        return newPosition;
     };
     VueSliderComponent.prototype.setIndex = function (val, skipPositionSet) {
         if (val < this.minimum || val > this.maximum) {
