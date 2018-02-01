@@ -38,12 +38,14 @@ export default class VueSliderComponent extends Vue {
     value: number;
     width: cssSize;
     private currentValue;
-    private flag;
+    private movingFlag;
     private isComponentExists;
     private size;
+    private progressBar;
+    private root;
     private thumb;
     private track;
-    private progressBar;
+    private xScale;
     constructor();
     readonly currentIndex: number;
     readonly getInterval: number;
@@ -81,7 +83,7 @@ export default class VueSliderComponent extends Vue {
     onMinChange(val: number): void;
     onShowChanged(val: boolean): void;
     onValueChanged(val: number): void;
-    getItemPosition(e: IEventPosition): number;
+    getItemPosition(event: IEventPosition): number;
     setIndex(val: number, skipPositionSet?: boolean): void;
     setValue(val: number, noCallback?: any, speed?: number): void;
     getValue(): number;

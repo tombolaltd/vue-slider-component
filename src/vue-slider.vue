@@ -112,7 +112,7 @@ import { IItemModel } from './interfaces/item-model';
     @Prop({default: false})
     public showItemLabel: boolean;
 
-    @Prop({default: 0.5})
+    @Prop({default: 0.2})
     public speed: number;
 
     @Prop({default: false})
@@ -164,6 +164,8 @@ import { IItemModel } from './interfaces/item-model';
     private root: VueHTMLElement;
     private thumb: VueHTMLElement;
     private track: VueHTMLElement;
+
+    private xScale: number = 1; // A scaling factor to help deal with non 1:1 viewport scaling
 
     constructor() {
         super();
@@ -306,24 +308,25 @@ import { IItemModel } from './interfaces/item-model';
         }
 
         const arr = [];
+        const thumbMiddle = this.thumbSize / 2;
         const adHocVerticalOffsetStyle =  {} as CSSStyleDeclaration;
-        adHocVerticalOffsetStyle.top =  `${ this.thumbSize * 1.5 }px`;
+        adHocVerticalOffsetStyle.top =  `${ this.thumbSize + thumbMiddle }px`;
 
         const adHocMarkerStyle =  {} as CSSStyleDeclaration;
-        adHocMarkerStyle.top = `-${this.thumbSize / 2}px`;
+        adHocMarkerStyle.top = `-${thumbMiddle}px`;
         adHocMarkerStyle.height = `${this.thumbSize * 2}px`;
 
         for (let i = 0; i <= this.total; i++) {
-          const position =  (this.gapWidth * i) + (this.thumbSize / 2);
+          const position =  (this.gapWidth * i) + thumbMiddle;
           const leftOffsetStyle = {} as CSSStyleDeclaration;
           leftOffsetStyle.left = `${[position]}px`;
 
           const index = this.reverse ? (this.total - i) : i;
+          const item = this.data ? this.data[index] : null;
           const value =  this.convertIndexToValue(index);
           const adHocData = this.adHocData ? this.adHocData.find((x: IAdHocData) =>  x.value === value) || null : null;
-          const item = this.data ? this.data[index] : null;
+          const label = this.data ? item : (this.getInterval * index) + this.min;
 
-          const label = this.data ? this.data[index] : (this.getInterval * index) + this.min;
           arr.push({
             adHocData,
             adHocMarkerStyle,
@@ -418,18 +421,33 @@ import { IItemModel } from './interfaces/item-model';
         this.updateTrackSize();
       }
 
-      const rect = this.track.getBoundingClientRect();
-      const scale = this.track.clientWidth / (rect.right - rect.left);
-      const scaledX = event.clientX * scale / scale;
+      // const scaledX = event.clientX * this.xScale;
+      let scaledX = event.clientX;
+      const size = this.size;
+      const thumbWidth = this.thumb.clientWidth;
 
-            /* tslint:disable:no-console */
-      console.log('***************************************************');
-      console.log(rect);
-      console.log(event);
-      console.log('***************************************************');
+      /* tslint:disable:no-console */
+      // console.log('***************************************************');
+      if (this.track.parentElement){
+        // console.log (this.track.parentElement.clientWidth);
+        // const factor = (rect.width / this.track.parentElement.clientWidth);
+        // offset = this.track.parentElement.offsetLeft + this.track.offsetLeft;
+        // scaledX = (scaledX - (3 * thumbWidth) - offset) / factor;
+        // // console.log (this.track.parentElement);
+        // // console.log (this.track);
+        // console.log (event.clientX, 'kjnsklndojsdhjon');
+        // console.log (this.track.parentElement.offsetLeft);
+        const rect = this.track.getBoundingClientRect();
+        const offesetCalc = - 10 - 8 - 8 - 50 - 50; // 50 = margin of parent 50=viewport margin 10=viewport padding 8=track padding 8 = dot width
+        scaledX = scaledX - rect.left - 8;
+        // console.log(event.clientX, scaledX);
+
+      }
+      // console.log(this.xScale);
+      // console.log('***************************************************');
       /* tslint:enable:no-console */
 
-      return this.reverse ? (this.size - (scaledX - this.thumb.clientWidth)) : (scaledX - (2 * this.thumb.clientWidth));
+      return this.reverse ? (this.track.clientWidth - scaledX - 16) : (scaledX);
     }
 
     public setIndex (val: number, skipPositionSet?: boolean): void{
@@ -594,9 +612,9 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onMouseMove (event: MouseEvent): void {
-      /* tslint:disable:no-console */
-      console.log('onMouseMove');
-      /* tslint:enable:no-console */
+      // /* tslint:disable:no-console */
+      // console.log('onMouseMove');
+      // /* tslint:enable:no-console */
 
       if (!this.movingFlag) {
         return;
@@ -606,9 +624,9 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onTouchMove (event: TouchEvent): void {
-      /* tslint:disable:no-console */
-      console.log('onTouchMove');
-      /* tslint:enable:no-console */
+      // /* tslint:disable:no-console */
+      // console.log('onTouchMove');
+      // /* tslint:enable:no-console */
 
       if (!this.movingFlag) {
         return;
@@ -620,9 +638,9 @@ import { IItemModel } from './interfaces/item-model';
     }
 
     private onMoveEnd (event: UIEvent): void {
-      /* tslint:disable:no-console */
-      console.log('onMoveEnd');
-      /* tslint:enable:no-console */
+      // /* tslint:disable:no-console */
+      // console.log('onMoveEnd');
+      // /* tslint:enable:no-console */
 
       if (this.movingFlag) {
         this.$emit('drag-end', this);
@@ -663,9 +681,13 @@ import { IItemModel } from './interfaces/item-model';
     private setValueOnPos (pos: number, isDrag?: boolean): void {
       const range = this.limit;
       const valueRange =  this.valueLimit;
+      const gapWidth = this.gapWidth;
+      const interval = this.getInterval;
+      const multiple = this.multiple;
+      const minimum = this.minimum;
       if (pos >= range[0] && pos <= range[1]) {
         this.setTransform(pos);
-        const v = (Math.round(pos / this.gapWidth) * (this.getInterval * this.multiple) + (this.minimum * this.multiple)) / this.multiple;
+        const v = (Math.round(pos / gapWidth) * (interval * multiple) + (minimum * multiple)) / multiple;
         this.setIndex(v, isDrag);
       } else if (pos < range[0]) {
         this.setTransform(range[0]);
@@ -697,17 +719,20 @@ import { IItemModel } from './interfaces/item-model';
       // this.thumb.style.left =  `${(-(this.thumbWidthVal / 4))}px`;  /*`${(-(this.thumbWidthVal - this.sliderContainerWidth) / 2)}px`;*/
     }
 
-    private updateTrackSize(): any {
-      const element = this.track;
-      if (element) {
-        this.size = element.offsetWidth;
+    private updateTrackSize(): void {
+      if (!this.track) {
+          return;
       }
+      this.size = this.track.offsetWidth;
+      this.$nextTick(() => {
+          const rect = this.track.getBoundingClientRect();
+          this.xScale = this.track.clientWidth / (rect.right - rect.left);
+      });
     }
   }
 </script>
 
 <style lang="less">
-  //TODO: lessify
   @tooltip-color: #3498db;
   @slider-track-color: #CCCCCC;
   @dot-color: #FFFFFF;

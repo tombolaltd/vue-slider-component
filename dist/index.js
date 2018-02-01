@@ -479,9 +479,10 @@ var VueSliderComponent = (function (_super) {
     function VueSliderComponent() {
         var _this = _super.call(this) || this;
         _this.currentValue = 0;
-        _this.flag = false;
+        _this.movingFlag = false;
         _this.isComponentExists = true;
         _this.size = 0;
+        _this.xScale = 1;
         return _this;
     }
     Object.defineProperty(VueSliderComponent.prototype, "currentIndex", {
@@ -692,20 +693,21 @@ var VueSliderComponent = (function (_super) {
                 return false;
             }
             var arr = [];
+            var thumbMiddle = this.thumbSize / 2;
             var adHocVerticalOffsetStyle = {};
-            adHocVerticalOffsetStyle.top = this.thumbSize * 1.5 + "px";
+            adHocVerticalOffsetStyle.top = this.thumbSize + thumbMiddle + "px";
             var adHocMarkerStyle = {};
-            adHocMarkerStyle.top = "-" + this.thumbSize / 2 + "px";
+            adHocMarkerStyle.top = "-" + thumbMiddle + "px";
             adHocMarkerStyle.height = this.thumbSize * 2 + "px";
             var _loop_1 = function (i) {
-                var position = (this_1.gapWidth * i) + (this_1.thumbSize / 2);
+                var position = (this_1.gapWidth * i) + thumbMiddle;
                 var leftOffsetStyle = {};
                 leftOffsetStyle.left = [position] + "px";
                 var index = this_1.reverse ? (this_1.total - i) : i;
+                var item = this_1.data ? this_1.data[index] : null;
                 var value = this_1.convertIndexToValue(index);
                 var adHocData = this_1.adHocData ? this_1.adHocData.find(function (x) { return x.value === value; }) || null : null;
-                var item = this_1.data ? this_1.data[index] : null;
-                var label = this_1.data ? this_1.data[index] : (this_1.getInterval * index) + this_1.min;
+                var label = this_1.data ? item : (this_1.getInterval * index) + this_1.min;
                 arr.push({
                     adHocData: adHocData,
                     adHocMarkerStyle: adHocMarkerStyle,
@@ -772,7 +774,7 @@ var VueSliderComponent = (function (_super) {
     });
     Object.defineProperty(VueSliderComponent.prototype, "tooltipStatusClass", {
         get: function () {
-            return this.tooltip === 'hover' && this.flag ? 'vue-slider-always' : this.tooltip ? "vue-slider-" + this.tooltip : '';
+            return this.tooltip === 'hover' && this.movingFlag ? 'vue-slider-always' : this.tooltip ? "vue-slider-" + this.tooltip : '';
         },
         enumerable: true,
         configurable: true
@@ -809,13 +811,21 @@ var VueSliderComponent = (function (_super) {
         }
     };
     VueSliderComponent.prototype.onValueChanged = function (val) {
-        this.flag || this.setValue(val, true);
+        this.movingFlag || this.setValue(val, true);
     };
-    VueSliderComponent.prototype.getItemPosition = function (e) {
+    VueSliderComponent.prototype.getItemPosition = function (event) {
         if (this.realTime) {
             this.updateTrackSize();
         }
-        return this.reverse ? (this.size - (e.clientX - this.thumb.clientWidth)) : (e.clientX - (2 * this.thumb.clientWidth));
+        var scaledX = event.clientX;
+        var size = this.size;
+        var thumbWidth = this.thumb.clientWidth;
+        if (this.track.parentElement) {
+            var rect = this.track.getBoundingClientRect();
+            var offesetCalc = -10 - 8 - 8 - 50 - 50;
+            scaledX = scaledX - rect.left - 8;
+        }
+        return this.reverse ? (this.track.clientWidth - scaledX - 16) : (scaledX);
     };
     VueSliderComponent.prototype.setIndex = function (val, skipPositionSet) {
         if (val < this.minimum || val > this.maximum) {
@@ -823,7 +833,7 @@ var VueSliderComponent = (function (_super) {
         }
         if (this.isDiff(this.currentValue, val)) {
             this.currentValue = val;
-            if (!this.lazy || !this.flag) {
+            if (!this.lazy || !this.movingFlag) {
                 this.syncValue();
             }
         }
@@ -853,6 +863,7 @@ var VueSliderComponent = (function (_super) {
     };
     VueSliderComponent.prototype.mounted = function () {
         var _this = this;
+        this.root = this.$refs.root;
         this.track = this.$refs.track;
         this.thumb = this.$refs.thumb;
         this.progressBar = this.$refs.progress;
@@ -875,10 +886,10 @@ var VueSliderComponent = (function (_super) {
     };
     VueSliderComponent.prototype.bindEvents = function () {
         var patchedAddEventListener = document.addEventListener;
+        document.addEventListener('mouseup', this.onMoveEnd);
+        document.addEventListener('mousemove', this.onMouseMove);
         patchedAddEventListener('touchmove', this.onTouchMove, { passive: false });
         patchedAddEventListener('touchend', this.onMoveEnd, { passive: false });
-        document.addEventListener('mousemove', this.onMouseMove);
-        document.addEventListener('mouseup', this.onMoveEnd);
         document.addEventListener('mouseleave', this.onMoveEnd);
         window.addEventListener('resize', this.refresh);
     };
@@ -889,6 +900,7 @@ var VueSliderComponent = (function (_super) {
         document.removeEventListener('mousemove', this.onMouseMove);
         document.removeEventListener('mouseup', this.onMoveEnd);
         document.removeEventListener('mouseleave', this.onMoveEnd);
+        document.removeEventListener('drag', this.onMoveEnd);
     };
     VueSliderComponent.prototype.convertIndexToValue = function (index) {
         var value = (index * this.interval) + this.minimum;
@@ -945,55 +957,42 @@ var VueSliderComponent = (function (_super) {
         return true;
     };
     VueSliderComponent.prototype.onMoveStart = function (e, index) {
-        if (this.stopPropagation) {
-            e.stopPropagation();
-        }
+        console.log('onMoveStart');
         if (this.isDisabled) {
             return;
         }
-        this.flag = true;
+        this.movingFlag = true;
         this.$emit('drag-start', this);
         return;
     };
     VueSliderComponent.prototype.onMouseMove = function (event) {
-        if (this.stopPropagation) {
-            event.stopPropagation();
-        }
-        if (!this.flag) {
+        if (!this.movingFlag) {
             return;
         }
-        event.preventDefault();
         this.setValueOnPos(this.getItemPosition(event), true);
     };
     VueSliderComponent.prototype.onTouchMove = function (event) {
-        if (this.stopPropagation) {
-            event.stopPropagation();
-        }
-        if (!this.flag) {
+        if (!this.movingFlag) {
             return;
         }
-        event.preventDefault();
         if (event.targetTouches[0]) {
             this.setValueOnPos(this.getItemPosition(event.targetTouches[0]), true);
         }
     };
     VueSliderComponent.prototype.onMoveEnd = function (event) {
-        if (this.stopPropagation) {
-            event.stopPropagation();
-        }
-        if (this.flag) {
+        if (this.movingFlag) {
             this.$emit('drag-end', this);
             if (this.lazy && this.isDiff(this.val, this.value)) {
                 this.syncValue();
             }
-            this.flag = false;
+            this.movingFlag = false;
             this.setPosition();
         }
     };
     VueSliderComponent.prototype.setPosition = function (speed) {
-        this.flag || this.setTransitionTime(speed === undefined ? this.speed : speed);
+        this.movingFlag || this.setTransitionTime(speed === undefined ? this.speed : speed);
         this.setTransform(this.position);
-        this.flag || this.setTransitionTime(0);
+        this.movingFlag || this.setTransitionTime(0);
     };
     VueSliderComponent.prototype.setTransform = function (position) {
         var value = (position - (this.thumbWidthVal / 2)) * (this.reverse ? -1 : 1);
@@ -1014,9 +1013,13 @@ var VueSliderComponent = (function (_super) {
     VueSliderComponent.prototype.setValueOnPos = function (pos, isDrag) {
         var range = this.limit;
         var valueRange = this.valueLimit;
+        var gapWidth = this.gapWidth;
+        var interval = this.getInterval;
+        var multiple = this.multiple;
+        var minimum = this.minimum;
         if (pos >= range[0] && pos <= range[1]) {
             this.setTransform(pos);
-            var v = (Math.round(pos / this.gapWidth) * (this.getInterval * this.multiple) + (this.minimum * this.multiple)) / this.multiple;
+            var v = (Math.round(pos / gapWidth) * (interval * multiple) + (minimum * multiple)) / multiple;
             this.setIndex(v, isDrag);
         }
         else if (pos < range[0]) {
@@ -1046,10 +1049,15 @@ var VueSliderComponent = (function (_super) {
         this.thumb.style.height = this.thumbHeightVal + "px";
     };
     VueSliderComponent.prototype.updateTrackSize = function () {
-        var element = this.track;
-        if (element) {
-            this.size = element.offsetWidth;
+        var _this = this;
+        if (!this.track) {
+            return;
         }
+        this.size = this.track.offsetWidth;
+        this.$nextTick(function () {
+            var rect = _this.track.getBoundingClientRect();
+            _this.xScale = _this.track.clientWidth / (rect.right - rect.left);
+        });
     };
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: function () { return []; } })
@@ -1118,7 +1126,7 @@ var VueSliderComponent = (function (_super) {
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
     ], VueSliderComponent.prototype, "showItemLabel", void 0);
     __decorate([
-        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 0.5 })
+        Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: 0.2 })
     ], VueSliderComponent.prototype, "speed", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Prop"])({ default: false })
@@ -1158,7 +1166,7 @@ var VueSliderComponent = (function (_super) {
     ], VueSliderComponent.prototype, "currentValue", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
-    ], VueSliderComponent.prototype, "flag", void 0);
+    ], VueSliderComponent.prototype, "movingFlag", void 0);
     __decorate([
         Object(__WEBPACK_IMPORTED_MODULE_0_vue_property_decorator__["Provide"])()
     ], VueSliderComponent.prototype, "isComponentExists", void 0);
@@ -2704,7 +2712,9 @@ var render = function() {
       directives: [
         { name: "show", rawName: "v-show", value: _vm.show, expression: "show" }
       ],
+      ref: "root",
       class: [
+        "noselect",
         "vue-slider-component",
         _vm.flowDirection,
         _vm.disabledClass,

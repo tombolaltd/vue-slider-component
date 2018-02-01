@@ -1,8 +1,8 @@
 <template>
-  <div id="app">
+  <div id="app" class="viewport">
     <div class="demo-container complex">
       <h2>Complex Styling</h2>
-      <vue-slider v-model="value" :height="16" :min="1" :max="90" :value="value" :progressBarStyle="progressBarStyle" class="tombola-styled" :ad-hoc-data="adHocData" >
+      <vue-slider v-model="value" :height="16" :min="1" :max="90" :value="value" :progressBarStyle="progressBarStyle" class="tombola-styled" :ad-hoc-data="adHocData" :width="1200" style="margin-left:50px">
       <template slot="tooltip">
          <span class="vue-slider-tooltip">{{ value }} / 90</span>
       </template>
@@ -75,6 +75,7 @@
 import { Component, Emit, Inject, Model, Prop, Provide, Vue, Watch } from 'vue-property-decorator';
 import { VueSliderComponent } from '../../src/index';
 import { IAdHocData } from '../../src/interfaces/ad-hoc-data';
+import { Viewport } from './viewport';
 
 @Component({
   components: {
@@ -140,79 +141,90 @@ export default class App  extends Vue {
   constructor() {
     super();
   }
+
+  private mounted(): void {
+        // If the viewport width or height is changed, the equivalent in demensions.less values should be updated too.
+        const element = this.$refs.viewport as HTMLElement;
+        const viewport = new Viewport(element, {width: 1500, height: 800});
+    }
 }
 </script>
 <style lang="less">
-* {
-  margin: 0;
-  padding: 0;
-}
-body {
-  overflow-x: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-}
-
-.vue-slider-component.tombola-styled {
-    .vue-slider-thumb {
-        background-color: #15A49C;
-    }
-    .vue-slider-tooltip {
-      width: 60px;
-      color: #ccc;
-      border: 1px solid #FFFFFF;
-      background-color: #FFFFFF;
-      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    }
-    .vue-slider-ad-hoc-item {
-      width: 100px;
-    }
-}
-
-.header {
-  height: 100vh;
-  position: relative;
-  width:  100%;
-  background-color: #151515;
-  background-image: -webkit-linear-gradient(-40deg, #000, #999);
-  background-image: linear-gradient(-40deg, #000, #999);
-  color: #fff;
-  text-align: center;
-  animation: mymove 2s linear 0s infinite;
-}
-
-#app {
-  padding: 50px 20px 0;
-}
-
-.demo-container {
-  h2 {
-    margin-bottom: 25px;
+  @import '~lesshat/lesshat.less';
+  * {
+    margin: 0;
+    padding: 0;
   }
-  &.complex {
-    .vue-slider-component {
-        margin-bottom: 40px;
+  #app {
+    padding: 0 10px;
+    background-color: cadetblue;
+    width: 1200px;
+    margin: 0 50px;
+  }
+  body {
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  }
+  .viewport {
+        .transform-origin(0 0 0);
+        .transform(scale(1));
+        position: fixed;
+  }
+  .vue-slider-component.tombola-styled {
+      width: 1000px;
+      .vue-slider-thumb {
+          background-color: #15A49C;
+      }
+      .vue-slider-tooltip {
+        width: 60px;
+        color: #ccc;
+        border: 1px solid #FFFFFF;
+        background-color: #FFFFFF;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+      }
+      .vue-slider-ad-hoc-item {
+        width: 100px;
       }
   }
-}
-
-.additional-info {
-    .additional-info-text {
-        visibility: hidden;
-        font-size: 14px;
-        width: 120px;
-        background-color: #CCCCCC;
-        color: #FFFFFF;
-        text-align: center;
-        top: 20px;
-        left: 0;
-        padding: 4px 0;
-        border-radius: 4px;
-        position: absolute;
-        z-index: 1;
+  .header {
+    height: 100vh;
+    position: relative;
+    width:  100%;
+    background-color: #151515;
+    background-image: -webkit-linear-gradient(-40deg, #000, #999);
+    background-image: linear-gradient(-40deg, #000, #999);
+    color: #fff;
+    text-align: center;
+    animation: mymove 2s linear 0s infinite;
+  }
+  
+  .demo-container {
+    h2 {
+      margin-bottom: 25px;
     }
-    &:hover .additional-info-text {
-      visibility: visible;
+    &.complex {
+      .vue-slider-component {
+          margin-bottom: 40px;
+        }
     }
-}
-
+  }
+  .additional-info {
+      .additional-info-text {
+          visibility: hidden;
+          font-size: 14px;
+          width: 120px;
+          background-color: #CCCCCC;
+          color: #FFFFFF;
+          text-align: center;
+          top: 20px;
+          left: 0;
+          padding: 4px 0;
+          border-radius: 4px;
+          position: absolute;
+          z-index: 1;
+      }
+      &:hover .additional-info-text {
+        visibility: visible;
+      }
+  }
 </style>
