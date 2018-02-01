@@ -9,7 +9,7 @@
       <template slot="adHoc" scope="props">
         <span class="additional-info">{{props.itemModel.adHocData.data.prize}}: {{ props.itemModel.adHocData.value }}
           <span class="additional-info-text">
-              <div v-for="(winner, index) in props.itemModel.adHocData.data.winners" :key="index">{{ winner }}</div>
+              <div v-for="(winner, index) in props.itemModel.adHocData.data.winners" :index="index">{{ winner }}</div>
           </span>
         </span>
       </template>
@@ -196,8 +196,6 @@ body {
 }
 
 .additional-info {
-    position: relative;
-    display: inline-block;
     .additional-info-text {
         visibility: hidden;
         font-size: 14px;
@@ -206,7 +204,7 @@ body {
         color: #FFFFFF;
         text-align: center;
         top: 20px;
-        left: -20px;
+        left: 0;
         padding: 4px 0;
         border-radius: 4px;
         position: absolute;
@@ -215,7 +213,6 @@ body {
     &:hover .additional-info-text {
       visibility: visible;
     }
-
 }
 
 </style>
